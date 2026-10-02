@@ -572,14 +572,19 @@ export function init() {
     resultsCol.textContent = "";
     const stamp = getTimestamp();
 
-    const shareObjects = data.shares.map((s) => ({
-      index: s.index,
-      blob: base64ToBlob(s.png_base64),
-      name: getShareFilename(mode, s.index, n, stamp),
-      b64: s.png_base64,
-    }));
-    const secretBlob = base64ToBlob(data.secret_bw_png_base64);
-    const reconstructionBlob = base64ToBlob(data.reconstruction_png_base64);
+    const shareObjects = data.shares.map((s) => {
+      const b64 = s.png_b64 || s.png_base64;
+      return {
+        index: s.index,
+        blob: base64ToBlob(b64),
+        name: getShareFilename(mode, s.index, n, stamp),
+        b64,
+      };
+    });
+    const secretB64 = data.secret_png_b64 || data.secret_bw_png_base64;
+    const secretBlob = base64ToBlob(secretB64);
+    const recB64 = data.reconstruction_png_b64 || data.reconstruction_png_base64;
+    const reconstructionBlob = base64ToBlob(recB64);
 
     setLastRun({
       mode,
@@ -688,8 +693,8 @@ export function init() {
 
     // Populate Overview panel (Section 4.10)
     const pnlOverview = panelElements[0];
-    const recSrc = `data:image/png;base64,${data.reconstruction_png_base64}`;
-    const sh1Src = `data:image/png;base64,${data.shares[0].png_base64}`;
+    const recSrc = `data:image/png;base64,${recB64}`;
+    const sh1Src = `data:image/png;base64,${shareObjects[0].b64}`;
 
     // Reveal Slider
     const slider = createRevealSlider(recSrc, sh1Src);
@@ -708,7 +713,7 @@ export function init() {
     const secSize = document.createElement("p");
     secSize.className = "help-text font-mono";
     secSize.textContent = `${data.metrics.secret_size.width} × ${data.metrics.secret_size.height} px`;
-    const secFrame = createImageFrame(`data:image/png;base64,${data.secret_bw_png_base64}`, "Secret (black-and-white)");
+    const secFrame = createImageFrame(`data:image/png;base64,${secretB64}`, "Secret (black-and-white)");
     secCard.appendChild(secTitle);
     secCard.appendChild(secSize);
     secCard.appendChild(secFrame.frame);
@@ -873,10 +878,11 @@ export function init() {
           card.appendChild(extraP);
         }
 
-        const resFrame = createImageFrame(`data:image/png;base64,${res.reconstruction_png_base64}`, "Combined shares");
+        const combB64 = res.reconstruction_png_b64 || res.reconstruction_png_base64;
+        const resFrame = createImageFrame(`data:image/png;base64,${combB64}`, "Combined shares");
         card.appendChild(resFrame.frame);
 
-        const resBlob = base64ToBlob(res.reconstruction_png_base64);
+        const resBlob = base64ToBlob(combB64);
         renderDownloadBar(resBlob, mode, card, res.sufficient);
 
         combineResultSlot.appendChild(card);
@@ -894,7 +900,9 @@ export function init() {
     // Populate Stack demo panel (Section 4.12)
     const pnlStack = panelElements[3];
     if (mode === "overlay") {
-      pnlStack.appendChild(renderStackingDemo(data.shares[0].png_base64, data.shares[1].png_base64));
+      const s1B64 = shareObjects[0].b64;
+      const s2B64 = shareObjects[1] ? shareObjects[1].b64 : "";
+      pnlStack.appendChild(renderStackingDemo(s1B64, s2B64));
     } else {
       const xorNotice = document.createElement("div");
       xorNotice.className = "alert alert-info";

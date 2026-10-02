@@ -513,7 +513,8 @@ export function init() {
     scrollContainer.style.padding = "16px";
     scrollContainer.style.border = "1px solid var(--border)";
 
-    const imgSrc = `data:image/png;base64,${data.reconstruction_png_base64}`;
+    const recB64 = data.reconstruction_png_b64 || data.reconstruction_png_base64;
+    const imgSrc = `data:image/png;base64,${recB64}`;
     const img = document.createElement("img");
     img.src = imgSrc;
     img.alt = "Reconstruction";
@@ -527,7 +528,7 @@ export function init() {
     card.appendChild(scrollContainer);
 
     // Download bar (Section 5)
-    const recBlob = base64ToBlob(data.reconstruction_png_base64);
+    const recBlob = base64ToBlob(recB64);
     renderDownloadBar(recBlob, mode, card, data.sufficient);
 
     // Alignment note

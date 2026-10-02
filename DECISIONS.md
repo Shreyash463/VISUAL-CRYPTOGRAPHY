@@ -35,4 +35,5 @@
 - **E16**: Timestamps and run state tracking: Recorded local time `HHMMSS` per generation run to tag all shares and reconstructions with consistent stamps, preventing filename collisions.
 - **E17**: Pre-flight client dimension validation: Analyzed image dimensions client-side before API calls to flag mismatches with warning chips and enforce C-5.
 - **E18**: Strict CSP property assignment: Avoided `setAttribute("style", ...)` and `style.cssText` in favor of direct property assignments (`element.style.width`, `element.style.setProperty`).
+- **E19**: Robust API property resolution & client accessibility: Bound API payload parsing to accept canonical backend properties (`png_b64`, `secret_png_b64`, `reconstruction_png_b64`) and attached keyboard activation (`Enter`/`Space`) to all drop zones.
 

@@ -25,9 +25,13 @@ export async function postForm(url, formData) {
   }
 
   if (!response.ok || !data.ok) {
-    const msg = data.error && data.error.message ? data.error.message : "An error occurred.";
+    const msg =
+      (data.error && data.error.message) ||
+      data.message ||
+      (typeof data.error === "string" ? data.error : null) ||
+      "An error occurred.";
     const error = new Error(msg);
-    error.code = data.error && data.error.code ? data.error.code : "ERROR";
+    error.code = (data.error && data.error.code) || data.code || "ERROR";
     throw error;
   }
 

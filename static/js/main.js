@@ -21,10 +21,8 @@ function initLogoSlot() {
 
   logoSlot.textContent = "";
 
-  const img = el("img", {
-    src: "/static/img/sspu-logo.png",
-    alt: "SSPU logo",
-  });
+  const img = document.createElement("img");
+  img.alt = "SSPU logo";
 
   img.addEventListener("error", () => {
     logoSlot.textContent = "";
@@ -40,6 +38,8 @@ function initLogoSlot() {
     logoSlot.textContent = "";
     logoSlot.appendChild(img);
   });
+
+  img.src = "/static/img/sspu-logo.png";
 }
 
 function initTabs() {
