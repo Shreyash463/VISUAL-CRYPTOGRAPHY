@@ -30,3 +30,9 @@
 - **E11**: Dynamic image pixelation: Evaluated natural versus displayed image dimensions in JavaScript to toggle `image-rendering: pixelated` only when images are magnified.
 - **E12**: Zero external asset dependencies: Fully self-contained local interface using system UI fonts and SVG/CSS UI elements without external CDNs or remote resources.
 - **E13**: Resilient logo slot: Attached programmatic `error` event handler in JavaScript to display the designated SSPU placeholder box gracefully whenever `sspu-logo.png` is missing.
+- **E14**: Deterministic seeded LCG for decorative noise: Used an in-memory linear congruential generator `(s * 1664525 + 1013904223) % 4294967296` to draw 48x48 decorative pixel patterns on offscreen canvas without invoking `Math.random` or external assets.
+- **E15**: Client-side viewing copy generation: Implemented in `static/js/download.js` using offscreen canvas to average each 2×2 block to 1 pixel with doubled contrast (510 × light), provided as a display convenience without altering exact stacked reconstruction.
+- **E16**: Timestamps and run state tracking: Recorded local time `HHMMSS` per generation run to tag all shares and reconstructions with consistent stamps, preventing filename collisions.
+- **E17**: Pre-flight client dimension validation: Analyzed image dimensions client-side before API calls to flag mismatches with warning chips and enforce C-5.
+- **E18**: Strict CSP property assignment: Avoided `setAttribute("style", ...)` and `style.cssText` in favor of direct property assignments (`element.style.width`, `element.style.setProperty`).
+

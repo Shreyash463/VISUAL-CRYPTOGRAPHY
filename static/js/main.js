@@ -1,7 +1,8 @@
 /**
- * Main application entry point: tabs, logo slot, keyboard navigation, and module initialization.
+ * Main application entry point: theme, tabs, logo slot, keyboard navigation, and module initialization.
  */
 import { el } from "./ui.js";
+import { initTheme } from "./theme.js";
 import { init as initGenerate } from "./generate.js";
 import { init as initReconstruct } from "./reconstruct.js";
 import { init as initCompare } from "./compare.js";
@@ -112,6 +113,7 @@ function initTabs() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   initLogoSlot();
   initTabs();
 

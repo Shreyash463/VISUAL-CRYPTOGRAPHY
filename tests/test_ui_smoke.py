@@ -1,4 +1,4 @@
-"""Smoke tests for Phase 2 web UI, HTML structure, security headers, and static assets."""
+"""Smoke tests for Phase 2 & 3 web UI, HTML structure, security headers, and static assets."""
 import re
 import json
 from pathlib import Path
@@ -15,7 +15,7 @@ def client():
 
 
 def test_index_structure(client):
-    """(1) GET / returns 200 and contains header, logo-slot, tabs, panels, and exact footer."""
+    """(1) GET / returns 200 and contains header, logo-slot, tabs, panels, exact footer, and subtitle."""
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
@@ -39,9 +39,43 @@ def test_index_structure(client):
     expected_footer = "Visual Cryptography | Progress Review II | SSPU | 10 October 2026"
     assert expected_footer in html
 
+    # Exact subtitle text (allowing HTML entity &amp;)
+    assert "Progress Review II · Design &amp; Implementation Review" in html or "Progress Review II · Design & Implementation Review" in html
+
+
+def test_phase3_index_elements(client):
+    """(2) GET / contains Phase 3 elements: theme toggle, toast region, inspector dialog, sub-tabs, and symbols."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'id="theme-toggle"' in html
+    assert 'id="toast-region"' in html
+    assert 'id="inspector-dialog"' in html
+
+    # Sub-tab ids
+    assert 'id="rtab-overview"' in html
+    assert 'id="rtab-shares"' in html
+    assert 'id="rtab-metrics"' in html
+    assert 'id="rtab-stack"' in html
+
+    # Sub-panel ids
+    assert 'id="rpanel-overview"' in html
+    assert 'id="rpanel-shares"' in html
+    assert 'id="rpanel-metrics"' in html
+    assert 'id="rpanel-stack"' in html
+
+    # Sprite symbols
+    symbols = [
+        "i-upload", "i-download", "i-zoom", "i-check", "i-x",
+        "i-alert", "i-info", "i-sun", "i-moon", "i-trash"
+    ]
+    for sym in symbols:
+        assert f'id="{sym}"' in html, f"Missing symbol {sym} in index.html"
+
 
 def test_security_headers(client):
-    """(2) GET / has Content-Security-Policy from 2.4 and X-Content-Type-Options nosniff."""
+    """(3) GET / has Content-Security-Policy from Phase 2 and X-Content-Type-Options nosniff."""
     resp = client.get("/")
     assert resp.status_code == 200
 
@@ -55,23 +89,38 @@ def test_security_headers(client):
 
 
 def test_static_assets_status(client):
-    """(3) Every static file referenced from index.html + team.json returns 200."""
+    """(4) Every static file referenced from index.html returns 200 (css, js modules, favicon)."""
     resp = client.get("/")
     html = resp.get_data(as_text=True)
 
-    # Collect static links from HTML
     urls = re.findall(r'(?:href|src)=["\'](/static/[^"\']+)["\']', html)
     urls.append("/static/team.json")
+    urls.append("/static/img/favicon.svg")
 
-    # Also test all modular JS files imported by main.js
+    # Modular JS files
     urls.extend([
-      "/static/js/api.js",
-      "/static/js/ui.js",
-      "/static/js/generate.js",
-      "/static/js/reconstruct.js",
-      "/static/js/compare.js",
-      "/static/js/stacking.js",
-      "/static/js/about.js",
+        "/static/js/main.js",
+        "/static/js/api.js",
+        "/static/js/ui.js",
+        "/static/js/generate.js",
+        "/static/js/reconstruct.js",
+        "/static/js/compare.js",
+        "/static/js/stacking.js",
+        "/static/js/about.js",
+        "/static/js/state.js",
+        "/static/js/theme.js",
+        "/static/js/toast.js",
+        "/static/js/download.js",
+        "/static/js/viewer.js",
+        "/static/js/metrics.js",
+    ])
+
+    # CSS files
+    urls.extend([
+        "/static/css/tokens.css",
+        "/static/css/base.css",
+        "/static/css/layout.css",
+        "/static/css/components.css",
     ])
 
     for url in set(urls):
@@ -80,7 +129,7 @@ def test_static_assets_status(client):
 
 
 def test_no_external_resources():
-    """(4) No external resources in index.html, no url(http or @import in CSS."""
+    """(5) No external resources in index.html, no url(http or @import in CSS."""
     root = Path(__file__).parent.parent
     index_html = (root / "templates" / "index.html").read_text(encoding="utf-8")
 
@@ -114,8 +163,44 @@ def test_no_inline_scripts_or_styles():
         assert body.strip() == "", f"Inline script body found: {body.strip()}"
 
 
+def test_forbidden_js_patterns():
+    """(6) Scan every file under static/js for forbidden patterns."""
+    root = Path(__file__).parent.parent
+    forbidden = [
+        "innerHTML", "outerHTML", "insertAdjacentHTML", "eval(", "new Function",
+        "document.write", "Math.random", 'setAttribute("style"', "setAttribute('style'", "cssText"
+    ]
+    js_files = list((root / "static" / "js").glob("*.js"))
+    assert len(js_files) > 0
+
+    for jf in js_files:
+        text = jf.read_text(encoding="utf-8")
+        for pat in forbidden:
+            assert pat not in text, f"Forbidden pattern '{pat}' found in {jf.name}"
+
+
+def test_download_js_patterns():
+    """(7) Scan static/js/download.js for the filename patterns and required strings."""
+    root = Path(__file__).parent.parent
+    download_js = (root / "static" / "js" / "download.js").read_text(encoding="utf-8")
+
+    # Required filename patterns
+    patterns = ["share_", "reconstruction_", "_viewing_"]
+    for pat in patterns:
+        assert pat in download_js, f"Pattern '{pat}' not found in static/js/download.js"
+
+    # Required strings
+    required_strings = [
+        "Download stacked PNG (exact, 2× size)",
+        "Download viewing copy (original size)",
+        "Download reconstruction PNG (exact)",
+    ]
+    for req in required_strings:
+        assert req in download_js, f"Required string '{req}' not found in static/js/download.js"
+
+
 def test_team_json(client):
-    """(6) GET /static/team.json is valid JSON with team_name and 4 members."""
+    """GET /static/team.json is valid JSON with team_name and 4 members."""
     resp = client.get("/static/team.json")
     assert resp.status_code == 200
     data = json.loads(resp.get_data(as_text=True))
@@ -127,7 +212,7 @@ def test_team_json(client):
 
 
 def test_no_harness_route(client):
-    """(7) The harness route and templates/harness.html no longer exist."""
+    """The harness route and templates/harness.html no longer exist."""
     root = Path(__file__).parent.parent
     assert not (root / "templates" / "harness.html").exists()
 

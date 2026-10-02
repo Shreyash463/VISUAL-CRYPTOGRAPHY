@@ -1,7 +1,8 @@
 /**
  * Stacking demo component for overlay mode (Naor & Shamir 1994).
  */
-import { el, checkImagePixelation } from "./ui.js";
+import { el, createIcon } from "./ui.js";
+import { checkPixelation } from "./viewer.js";
 
 export function renderStackingDemo(share1B64, share2B64) {
   const container = el("div", { className: "card stacking-card" });
@@ -13,14 +14,14 @@ export function renderStackingDemo(share1B64, share2B64) {
 
   const readout = el(
     "div",
-    { className: "offset-readout" },
+    { className: "offset-readout font-mono text-sm" },
     `Offset: x = +${offsetX} px, y = +${offsetY} px`
   );
 
   const alignBtn = el(
     "button",
-    { type: "button", className: "btn-secondary btn-sm" },
-    "Align shares"
+    { type: "button", className: "btn btn-secondary btn-sm" },
+    [createIcon("i-shuffle"), " Align shares"]
   );
 
   const controlsRow = el("div", { className: "stack-controls-row" }, [
@@ -31,21 +32,21 @@ export function renderStackingDemo(share1B64, share2B64) {
   const stage = el("div", { className: "stacking-stage" });
 
   const baseImg = el("img", {
-    className: "stack-base-img",
+    className: "stack-base-img pixelated",
     src: `data:image/png;base64,${share1B64}`,
     alt: "Share 1 base",
   });
 
   const topImg = el("img", {
-    className: "stack-top-img",
+    className: "stack-top-img pixelated",
     src: `data:image/png;base64,${share2B64}`,
     alt: "Share 2 (drag or focus and use arrow keys to align)",
     tabindex: "0",
   });
 
   topImg.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-  checkImagePixelation(baseImg);
-  checkImagePixelation(topImg);
+  checkPixelation(baseImg);
+  checkPixelation(topImg);
 
   stage.appendChild(baseImg);
   stage.appendChild(topImg);

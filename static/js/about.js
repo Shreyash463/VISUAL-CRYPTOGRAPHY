@@ -1,7 +1,7 @@
 /**
- * About & References tab module (Sections A to H).
+ * About & References tab module (Section 10, Sections A to H).
  */
-import { el } from "./ui.js";
+import { el, createIcon } from "./ui.js";
 
 const WHAT_IS_VC_BULLETS = [
   "A secret image is turned into several noise-like shares and becomes visible only when the right shares are combined.",
@@ -163,74 +163,90 @@ const VERIFICATION_NOTE =
   "P1's proceedings volume is dated 1995; the conference was 1994. " +
   "Where a source was abstract-only, claims are kept to what the abstract states.";
 
+function createAccordion(title, iconId, isOpen = false) {
+  const details = document.createElement("details");
+  details.className = "about-details card";
+  if (isOpen) details.open = true;
+
+  const summary = document.createElement("summary");
+  summary.className = "about-summary";
+  summary.appendChild(createIcon(iconId));
+  const span = document.createElement("span");
+  span.textContent = ` ${title}`;
+  summary.appendChild(span);
+  details.appendChild(summary);
+
+  const content = document.createElement("div");
+  content.className = "about-content";
+  details.appendChild(content);
+
+  return { details, content };
+}
+
 export function init() {
   const panel = document.getElementById("panel-about");
   if (!panel) return;
 
   panel.textContent = "";
 
-  // Section A: What is visual cryptography?
-  const secA = el("section", { className: "card" });
-  secA.appendChild(el("h2", {}, "What is visual cryptography?"));
-  const ulA = el("ul", { className: "help-text" });
+  // Section A: What is visual cryptography? (Open by default)
+  const secA = createAccordion("What is visual cryptography?", "i-info", true);
+  const ulA = el("ul", { className: "help-text", style: { paddingLeft: "20px" } });
   WHAT_IS_VC_BULLETS.forEach((text) => {
-    ulA.appendChild(el("li", {}, text));
+    ulA.appendChild(el("li", { style: { marginBottom: "8px" } }, text));
   });
-  secA.appendChild(ulA);
-  panel.appendChild(secA);
+  secA.content.appendChild(ulA);
+  panel.appendChild(secA.details);
 
-  // Section B: Why it matters
-  const secB = el("section", { className: "card" });
-  secB.appendChild(el("h2", {}, "Why it matters"));
-  const ulB = el("ul", { className: "help-text" });
+  // Section B: Why it matters (Open by default)
+  const secB = createAccordion("Why it matters", "i-check", true);
+  const ulB = el("ul", { className: "help-text", style: { paddingLeft: "20px" } });
   WHY_IT_MATTERS_BULLETS.forEach((text) => {
-    ulB.appendChild(el("li", {}, text));
+    ulB.appendChild(el("li", { style: { marginBottom: "8px" } }, text));
   });
-  secB.appendChild(ulB);
-  panel.appendChild(secB);
+  secB.content.appendChild(ulB);
+  panel.appendChild(secB.details);
 
   // Section C: How this tool works
-  const secC = el("section", { className: "card" });
-  secC.appendChild(el("h2", {}, "How this tool works"));
+  const secC = createAccordion("How this tool works", "i-layers", false);
+  secC.content.appendChild(el("h4", { className: "metric-card-title" }, "Encode Path"));
 
-  secC.appendChild(el("h3", {}, "Encode Path"));
-  const encodeFlow = el("div", { className: "flow-diagram" }, [
-    el("div", { className: "flow-step" }, "Upload"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Validate"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Preprocess"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Generate Shares"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Shares Out"),
+  const encodeFlow = el("div", { className: "diagram-boxes" }, [
+    el("div", { className: "diagram-box" }, "Upload"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Validate"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Preprocess"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Generate Shares"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Shares Out"),
   ]);
-  secC.appendChild(encodeFlow);
+  secC.content.appendChild(encodeFlow);
 
-  secC.appendChild(el("h3", {}, "Decode Path"));
-  const decodeFlow = el("div", { className: "flow-diagram" }, [
-    el("div", { className: "flow-step" }, "Shares In"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Reconstruct"),
-    el("span", { className: "flow-arrow" }, "→"),
-    el("div", { className: "flow-step" }, "Result Shown"),
+  secC.content.appendChild(el("h4", { className: "metric-card-title", style: { marginTop: "16px" } }, "Decode Path"));
+  const decodeFlow = el("div", { className: "diagram-boxes" }, [
+    el("div", { className: "diagram-box" }, "Shares In"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Reconstruct"),
+    createIcon("i-arrow-right"),
+    el("div", { className: "diagram-box" }, "Result Shown"),
   ]);
-  secC.appendChild(decodeFlow);
+  secC.content.appendChild(decodeFlow);
 
-  secC.appendChild(
+  secC.content.appendChild(
     el(
       "p",
-      { className: "help-text" },
+      { className: "help-text", style: { marginTop: "12px" } },
       "Generic block diagram of a web-based visual cryptography system. Share storage and delivery (M6) is optional and not included in this build."
     )
   );
-  panel.appendChild(secC);
+  panel.appendChild(secC.details);
 
   // Section D: Modules
-  const secD = el("section", { className: "card" });
-  secD.appendChild(el("h2", {}, "Modules"));
+  const secD = createAccordion("Modules", "i-sliders", false);
   const tableWrapperD = el("div", { className: "table-wrapper" });
-  const tableD = el("table");
+  const tableD = el("table", { className: "leakage-table" });
   tableD.appendChild(
     el("thead", {}, [
       el("tr", {}, [
@@ -252,24 +268,22 @@ export function init() {
   });
   tableD.appendChild(tbodyD);
   tableWrapperD.appendChild(tableD);
-  secD.appendChild(tableWrapperD);
-  panel.appendChild(secD);
+  secD.content.appendChild(tableWrapperD);
+  panel.appendChild(secD.details);
 
   // Section E: Known limitations (constraints)
-  const secE = el("section", { className: "card" });
-  secE.appendChild(el("h2", {}, "Known limitations (constraints)"));
-  const ulE = el("ul", { className: "help-text" });
+  const secE = createAccordion("Known limitations (constraints)", "i-alert", false);
+  const ulE = el("ul", { className: "help-text", style: { paddingLeft: "20px" } });
   LIMITATIONS_DATA.forEach((text) => {
-    ulE.appendChild(el("li", {}, text));
+    ulE.appendChild(el("li", { style: { marginBottom: "8px" } }, text));
   });
-  secE.appendChild(ulE);
-  panel.appendChild(secE);
+  secE.content.appendChild(ulE);
+  panel.appendChild(secE.details);
 
-  // Section F: Literature at a glance
-  const secF = el("section", { className: "card" });
-  secF.appendChild(el("h2", {}, "Literature at a glance"));
-  const tableWrapperF = el("div", { className: "table-wrapper" });
-  const tableF = el("table");
+  // Section F: Literature at a glance (Sticky header, zebra rows, scroll wrapper)
+  const secF = createAccordion("Literature at a glance", "i-image", false);
+  const tableWrapperF = el("div", { className: "table-wrapper", style: { maxHeight: "400px", overflow: "auto" } });
+  const tableF = el("table", { className: "literature-table leakage-table" });
   tableF.appendChild(
     el("thead", {}, [
       el("tr", {}, [
@@ -293,35 +307,36 @@ export function init() {
   });
   tableF.appendChild(tbodyF);
   tableWrapperF.appendChild(tableF);
-  secF.appendChild(tableWrapperF);
-  panel.appendChild(secF);
+  secF.content.appendChild(tableWrapperF);
+  panel.appendChild(secF.details);
 
   // Section G: Source key
-  const secG = el("section", { className: "card" });
-  secG.appendChild(el("h2", {}, "Source key"));
-  const ulG = el("ul", { className: "help-text" });
+  const secG = createAccordion("Source key", "i-link", false);
+  const ulG = el("ul", { className: "help-text", style: { paddingLeft: "20px" } });
   SOURCE_KEY_DATA.forEach((s) => {
-    const li = el("li", {}, [
+    const isFullText = s.read === "Full text";
+    const badgeClass = isFullText ? "badge badge-success" : "badge badge-neutral";
+    const li = el("li", { style: { marginBottom: "12px" } }, [
       el("strong", {}, `${s.id} `),
       document.createTextNode(`${s.citation} `),
       el("a", { href: s.url, target: "_blank", rel: "noopener noreferrer" }, s.url),
-      el("span", { className: "badge badge-neutral" }, ` Read: ${s.read}`),
+      document.createTextNode(" "),
+      el("span", { className: badgeClass }, [
+        createIcon(isFullText ? "i-check" : "i-info", "icon icon-sm"),
+        ` Read: ${s.read}`,
+      ]),
     ]);
     ulG.appendChild(li);
   });
-  secG.appendChild(ulG);
+  secG.content.appendChild(ulG);
 
-  const verifNote = el(
-    "p",
-    { className: "text-xs" },
-    VERIFICATION_NOTE
-  );
-  secG.appendChild(verifNote);
-  panel.appendChild(secG);
+  const verifNote = el("p", { className: "help-text", style: { marginTop: "16px" } }, VERIFICATION_NOTE);
+  secG.content.appendChild(verifNote);
+  panel.appendChild(secG.details);
 
-  // Section H: Team block (Section 2.3)
-  const secH = el("section", { className: "card" });
-  secH.appendChild(el("h2", {}, "Team"));
+  // Section H: Team block (Card with 2 columns on desktop)
+  const secH = el("section", { className: "card", style: { marginTop: "16px" } });
+  secH.appendChild(el("h2", { className: "card-title" }, "Team"));
 
   const teamContainer = el("div", { className: "metrics-grid" });
   secH.appendChild(teamContainer);
@@ -333,18 +348,18 @@ export function init() {
       const placeholder = "__________ (to be filled in)";
       const teamName = team.team_name && team.team_name.trim() ? team.team_name : placeholder;
 
-      const itemTeam = el("div", { className: "metric-item" }, [
-        el("span", { className: "metric-label" }, "Team Name"),
-        el("span", { className: "metric-value" }, teamName),
+      const itemTeam = el("div", { className: "metric-card card" }, [
+        el("span", { className: "metric-card-title" }, "Team Name"),
+        el("span", { className: "font-mono" }, teamName),
       ]);
       teamContainer.appendChild(itemTeam);
 
       const members = Array.isArray(team.members) ? team.members : [];
       for (let i = 0; i < 4; i++) {
         const mem = members[i] && members[i].trim() ? members[i] : placeholder;
-        const itemMember = el("div", { className: "metric-item" }, [
-          el("span", { className: "metric-label" }, `Team Member ${i + 1}`),
-          el("span", { className: "metric-value" }, mem),
+        const itemMember = el("div", { className: "metric-card card" }, [
+          el("span", { className: "metric-card-title" }, `Team Member ${i + 1}`),
+          el("span", { className: "font-mono" }, mem),
         ]);
         teamContainer.appendChild(itemMember);
       }
@@ -352,16 +367,16 @@ export function init() {
     .catch(() => {
       const placeholder = "__________ (to be filled in)";
       teamContainer.appendChild(
-        el("div", { className: "metric-item" }, [
-          el("span", { className: "metric-label" }, "Team Name"),
-          el("span", { className: "metric-value" }, placeholder),
+        el("div", { className: "metric-card card" }, [
+          el("span", { className: "metric-card-title" }, "Team Name"),
+          el("span", { className: "font-mono" }, placeholder),
         ])
       );
       for (let i = 0; i < 4; i++) {
         teamContainer.appendChild(
-          el("div", { className: "metric-item" }, [
-            el("span", { className: "metric-label" }, `Team Member ${i + 1}`),
-            el("span", { className: "metric-value" }, placeholder),
+          el("div", { className: "metric-card card" }, [
+            el("span", { className: "metric-card-title" }, `Team Member ${i + 1}`),
+            el("span", { className: "font-mono" }, placeholder),
           ])
         );
       }

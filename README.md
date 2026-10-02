@@ -30,6 +30,40 @@ python -m vc.bench
 
 ---
 
+## Key Phase 3 Capabilities & UI Architecture
+
+1. **Design System & Theming:**
+   - Technical-editorial theme with deep ink (`#0B0F17`) dark mode and crisp paper (`#F4F6FB`) light mode.
+   - Respects `prefers-color-scheme` by default, with manual `#theme-toggle` persisted in `localStorage["vc-theme"]`.
+   - Accessible SVG stroke icons, focus indicators, and reduced-motion compliance.
+
+2. **Generate Tab Enhancements:**
+   - Collapsible "How it works" hero strip detailing Split, Distribute, and Combine steps.
+   - Two-column responsive desktop layout (1024px+) with sticky controls and interactive stepper.
+   - Seeded noise empty state and loading skeletons.
+   - Results sub-tabs: Overview, Shares, Metrics, and Stack demo.
+   - Interactive Reveal Slider comparing Share 1 (noise) against the combined reconstruction.
+   - Subpixel Inspector dialog supporting 1×, 2×, and 4× zoom magnification.
+
+3. **Reconstruction Download & Viewing Copy:**
+   - **Exact Stacked PNG (2× size):** Faithful representation of physical transparency overlay.
+   - **Viewing Copy (1× size):** Created client-side via canvas by averaging each 2×2 block to one pixel with doubled contrast for reading convenience. Contrast loss is still reported in metrics (C-1).
+   - **Exact XOR Reconstruction PNG:** Bit-identical mathematical reconstruction.
+   - **Timestamped Filenames:** Formatted with local `HHMMSS` stamps (`share_<mode>_<i>_of_<n>_<stamp>.png`, `reconstruction_<mode>_<stamp>.png`, `reconstruction_<mode>_viewing_<stamp>.png`) to eliminate file collisions.
+   - **Privacy Notice:** Downloaded files contain revealed secrets; no images or shares are ever saved on the server.
+
+4. **Reconstruct Tab Redesign:**
+   - Instant client-side dimension verification flagging size mismatches before API calls (C-5).
+   - "Use shares from the last Generate run" button for seamless cross-tab workflows.
+   - Segmented Fit control ("Fit width | 100%") with scrollable viewport.
+
+5. **Visual Metrics & Comparative Analysis:**
+   - Visual progress tracks for pixel expansion, contrast relative difference, and single-share leakage deviation.
+   - Side-by-side comparison on the Compare tab with dual bar pairs and verification badges.
+   - Expandable documentation accordions on the About tab.
+
+---
+
 ## Feature Traceability Matrix
 
 | Requirement ID | Description | Implementation Location |
@@ -38,10 +72,10 @@ python -m vc.bench
 | **FR-2** | Validate format, dimensions, size; return clear user guidance | `vc/validation.py`, `vc/config.py` |
 | **FR-3** | Preprocess image to binary matrix (halftone / threshold) | `vc/preprocessing.py` |
 | **FR-4** | Support 2-of-2 overlay and selectable XOR modes | `vc/overlay.py`, `vc/xor.py`, `app.py` |
-| **FR-5** | Display generated shares and download each separately as PNG | `static/js/generate.js`, `static/js/ui.js` |
+| **FR-5** | Display generated shares and download each separately as PNG | `static/js/generate.js`, `static/js/download.js` |
 | **FR-6** | Reconstruct and display secret from user-uploaded shares | `vc/service.py`, `static/js/reconstruct.js` |
 | **FR-7** | Prevent secret revelation from fewer than required shares | `vc/service.py`, `tests/test_xor.py`, `static/js/generate.js` |
-| **FR-8** | Measure and report contrast, pixel expansion, leakage per run | `vc/metrics.py`, `static/js/ui.js` |
+| **FR-8** | Measure and report contrast, pixel expansion, leakage per run | `vc/metrics.py`, `static/js/metrics.js` |
 | **NFR-1** | Sub-threshold shares reveal zero secret information | D7 tolerance checks in `vc/metrics.py`, `tests/test_xor.py` |
 | **NFR-2** | Cryptographically secure randomness | `vc/rng.py` (strictly using Python `secrets` module) |
 | **NFR-3** | Stateless privacy: zero server persistence of secrets or shares | Memory-only handling in `vc/service.py`, verified in `tests/test_privacy.py` |
