@@ -186,5 +186,23 @@ def create_app() -> Flask:
 
 app = create_app()
 
+# Normalize serverless / reverse-proxy PATH_INFO prefix
+_original_wsgi = app.wsgi_app
+
+
+def _vercel_wsgi_app(environ, start_response):
+    path = environ.get("PATH_INFO", "")
+    for prefix in ("/app.py", "/app", "/index.py", "/index"):
+        if path == prefix:
+            environ["PATH_INFO"] = "/"
+            break
+        elif path.startswith(f"{prefix}/"):
+            environ["PATH_INFO"] = path[len(prefix) :]
+            break
+    return _original_wsgi(environ, start_response)
+
+
+app.wsgi_app = _vercel_wsgi_app
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False)
