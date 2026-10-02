@@ -53,7 +53,7 @@ def create_app() -> Flask:
                     "message": ERROR_MESSAGES["NOT_FOUND"],
                 },
             }), 404
-        return "Not Found", 404
+        return f"Not Found: path='{request.path}' environ_path='{request.environ.get('PATH_INFO')}' script_name='{request.environ.get('SCRIPT_NAME')}'", 404
 
     @app.errorhandler(405)
     def handle_method_not_allowed(error):
