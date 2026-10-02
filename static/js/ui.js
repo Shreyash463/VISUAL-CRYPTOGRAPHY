@@ -100,12 +100,16 @@ export function formatNumber(value, decimals = 3) {
   return Number(value).toFixed(decimals);
 }
 
-export function badge(text, kind = "neutral") {
-  const iconId = kind === "success" ? "i-check" : kind === "error" || kind === "warn" ? "i-x" : "i-info";
+export function createBadge(text, kind = "neutral", iconId = null) {
+  const icon = iconId || (kind === "success" ? "i-check" : kind === "error" || kind === "warn" ? "i-x" : "i-info");
   const span = el("span", { className: `badge badge-${kind}` });
-  span.appendChild(createIcon(iconId));
+  span.appendChild(createIcon(icon));
   span.appendChild(document.createTextNode(` ${text}`));
   return span;
+}
+
+export function badge(text, kind = "neutral") {
+  return createBadge(text, kind);
 }
 
 export function renderMetricsPanel(metrics) {

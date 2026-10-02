@@ -2,7 +2,7 @@
  * Generate tab module (FR-1, FR-3, FR-4, FR-5, FR-8).
  */
 import { postForm } from "./api.js";
-import { el, base64ToBlob, setBusy, showError, createIcon } from "./ui.js";
+import { el, base64ToBlob, setBusy, showError, createIcon, createBadge } from "./ui.js";
 import { setLastRun, clearRun, trackUrl } from "./state.js";
 import { showToast } from "./toast.js";
 import { getTimestamp, getShareFilename, triggerDownload, renderDownloadBar } from "./download.js";
@@ -245,6 +245,13 @@ export function init() {
     }
   });
 
+  dropZone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
   // Step 2: Scheme
   const step2 = document.createElement("div");
   step2.className = "step-item";
@@ -276,7 +283,12 @@ export function init() {
   overlayContent.className = "radio-card-content";
   const overlayTitle = document.createElement("div");
   overlayTitle.className = "radio-card-title";
-  overlayTitle.textContent = "Overlay 2-out-of-2 (P1)";
+  const overlayTitleText = document.createElement("span");
+  overlayTitleText.textContent = "Overlay 2-out-of-2 (P1)";
+  const overlayBadge = createBadge("Selected", "success", "i-check");
+  overlayTitle.appendChild(overlayTitleText);
+  overlayTitle.appendChild(overlayBadge);
+
   const overlayDesc = document.createElement("div");
   overlayDesc.className = "radio-card-desc";
   overlayDesc.textContent = "Baseline Naor-Shamir (1994). 2×2 subpixels per pixel. Decoding by physical stacking without computation.";
@@ -297,7 +309,13 @@ export function init() {
   xorContent.className = "radio-card-content";
   const xorTitle = document.createElement("div");
   xorTitle.className = "radio-card-title";
-  xorTitle.textContent = "XOR (n,n) (P6)";
+  const xorTitleText = document.createElement("span");
+  xorTitleText.textContent = "XOR (n,n) (P6)";
+  const xorBadge = createBadge("Selected", "success", "i-check");
+  xorBadge.hidden = true;
+  xorTitle.appendChild(xorTitleText);
+  xorTitle.appendChild(xorBadge);
+
   const xorDesc = document.createElement("div");
   xorDesc.className = "radio-card-desc";
   xorDesc.textContent = "Wang et al. (2005). No pixel expansion. Perfect reconstruction when all n shares are combined by XOR.";
@@ -355,11 +373,15 @@ export function init() {
     if (radioOverlay.checked) {
       overlayCard.classList.add("selected");
       xorCard.classList.remove("selected");
+      overlayBadge.hidden = false;
+      xorBadge.hidden = true;
       overlayShareNote.hidden = false;
       xorSelectGroup.hidden = true;
     } else {
       overlayCard.classList.remove("selected");
       xorCard.classList.add("selected");
+      overlayBadge.hidden = true;
+      xorBadge.hidden = false;
       overlayShareNote.hidden = true;
       xorSelectGroup.hidden = false;
     }
@@ -502,7 +524,7 @@ export function init() {
     fd.append("file", selectedFile);
     fd.append("mode", mode);
     fd.append("n", String(n));
-    fd.append("preprocessing", preprocessing);
+    fd.append("preprocess", preprocessing);
     if (threshold !== undefined) {
       fd.append("threshold", String(threshold));
     }
@@ -573,16 +595,13 @@ export function init() {
     const headerRow = document.createElement("div");
     headerRow.className = "results-header card";
 
+    const topRow = document.createElement("div");
+    topRow.className = "results-header-top";
+
     const hTitle = document.createElement("h2");
     hTitle.tabIndex = -1;
     hTitle.textContent = "Results";
-    headerRow.appendChild(hTitle);
-
-    const hNote = document.createElement("p");
-    hNote.className = "help-text";
-    hNote.textContent =
-      "Nothing is stored on the server. Results live only in this browser tab until you clear them or close the page.";
-    headerRow.appendChild(hNote);
+    topRow.appendChild(hTitle);
 
     const clearBtn = document.createElement("button");
     clearBtn.type = "button";
@@ -595,7 +614,14 @@ export function init() {
       resultsCol.appendChild(emptyState);
       showToast("Results cleared from this page.", "i-trash");
     });
-    headerRow.appendChild(clearBtn);
+    topRow.appendChild(clearBtn);
+    headerRow.appendChild(topRow);
+
+    const hNote = document.createElement("p");
+    hNote.className = "help-text";
+    hNote.textContent =
+      "Nothing is stored on the server. Results live only in this browser tab until you clear them or close the page.";
+    headerRow.appendChild(hNote);
 
     resultsCol.appendChild(headerRow);
 
@@ -671,7 +697,7 @@ export function init() {
 
     // Two cards side by side
     const cardsRow = document.createElement("div");
-    cardsRow.className = "two-col-layout";
+    cardsRow.className = "overview-cards-grid";
 
     // Secret card
     const secCard = document.createElement("div");
@@ -709,7 +735,7 @@ export function init() {
     // Populate Shares panel (Section 4.11)
     const pnlShares = panelElements[1];
     const sharesGrid = document.createElement("div");
-    sharesGrid.className = "compare-columns";
+    sharesGrid.className = "shares-grid";
 
     const shareCheckboxes = [];
 
@@ -818,6 +844,7 @@ export function init() {
         const cfd = new FormData();
         cfd.append("mode", mode);
         cfd.append("n", String(n));
+        cfd.append("n_total", String(n));
         selectedIndices.forEach((idx) => {
           const sh = shareObjects.find((s) => s.index === idx);
           if (sh) {

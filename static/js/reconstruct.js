@@ -2,7 +2,7 @@
  * Reconstruct tab module (Section 7, FR-6, FR-7, C-5).
  */
 import { postForm } from "./api.js";
-import { el, base64ToBlob, setBusy, showError, createIcon } from "./ui.js";
+import { el, base64ToBlob, setBusy, showError, createIcon, createBadge } from "./ui.js";
 import { getLastRun, trackUrl } from "./state.js";
 import { renderDownloadBar } from "./download.js";
 import { createImageFrame, createFitControl } from "./viewer.js";
@@ -99,6 +99,13 @@ export function init() {
   fileInput.id = "rec-file-input";
   dropZone.appendChild(fileInput);
 
+  dropZone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
   const dropZoneInner = document.createElement("div");
   dropZoneInner.className = "drop-zone-inner";
   const uploadIcon = createIcon("i-upload", "icon icon-lg drop-zone-icon");
@@ -146,7 +153,12 @@ export function init() {
   overlayContent.className = "radio-card-content";
   const overlayTitle = document.createElement("div");
   overlayTitle.className = "radio-card-title";
-  overlayTitle.textContent = "Overlay 2-out-of-2 (P1)";
+  const overlayTitleText = document.createElement("span");
+  overlayTitleText.textContent = "Overlay 2-out-of-2 (P1)";
+  const overlayBadge = createBadge("Selected", "success", "i-check");
+  overlayTitle.appendChild(overlayTitleText);
+  overlayTitle.appendChild(overlayBadge);
+
   const overlayDesc = document.createElement("div");
   overlayDesc.className = "radio-card-desc";
   overlayDesc.textContent = "Baseline Naor-Shamir (1994). 2×2 subpixels per pixel. Decoding by physical stacking without computation.";
@@ -167,7 +179,13 @@ export function init() {
   xorContent.className = "radio-card-content";
   const xorTitle = document.createElement("div");
   xorTitle.className = "radio-card-title";
-  xorTitle.textContent = "XOR (n,n) (P6)";
+  const xorTitleText = document.createElement("span");
+  xorTitleText.textContent = "XOR (n,n) (P6)";
+  const xorBadge = createBadge("Selected", "success", "i-check");
+  xorBadge.hidden = true;
+  xorTitle.appendChild(xorTitleText);
+  xorTitle.appendChild(xorBadge);
+
   const xorDesc = document.createElement("div");
   xorDesc.className = "radio-card-desc";
   xorDesc.textContent = "Wang et al. (2005). No pixel expansion. Perfect reconstruction when all n shares are combined by XOR.";
@@ -212,11 +230,15 @@ export function init() {
     if (radioOverlay.checked) {
       overlayCard.classList.add("selected");
       xorCard.classList.remove("selected");
+      overlayBadge.hidden = false;
+      xorBadge.hidden = true;
       overlayNote.hidden = false;
       xorSelectGroup.hidden = true;
     } else {
       overlayCard.classList.remove("selected");
       xorCard.classList.add("selected");
+      overlayBadge.hidden = true;
+      xorBadge.hidden = false;
       overlayNote.hidden = true;
       xorSelectGroup.hidden = false;
     }
@@ -417,6 +439,7 @@ export function init() {
     const fd = new FormData();
     fd.append("mode", mode);
     fd.append("n", String(n));
+    fd.append("n_total", String(n));
     chosenFiles.forEach((item) => {
       fd.append("shares", item.file, item.file.name);
     });
