@@ -36,4 +36,5 @@
 - **E17**: Pre-flight client dimension validation: Analyzed image dimensions client-side before API calls to flag mismatches with warning chips and enforce C-5.
 - **E18**: Strict CSP property assignment: Avoided `setAttribute("style", ...)` and `style.cssText` in favor of direct property assignments (`element.style.width`, `element.style.setProperty`).
 - **E19**: Robust API property resolution & client accessibility: Bound API payload parsing to accept canonical backend properties (`png_b64`, `secret_png_b64`, `reconstruction_png_b64`) and attached keyboard activation (`Enter`/`Space`) to all drop zones.
+- **E20**: Cloud deployment configuration: Added Vercel serverless entrypoint (`api/index.py`), `vercel.json` rewrites, `render.yaml` blueprint, `Procfile`, and `Dockerfile` for zero-config production deployment.
 
