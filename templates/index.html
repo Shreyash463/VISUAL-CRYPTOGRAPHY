@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Cryptography — Progress Review II</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <script type="module" src="/static/js/main.js"></script>
+</head>
+<body>
+  <header id="site-header">
+    <div class="site-container header-inner">
+      <div id="logo-slot"></div>
+      <div class="title-block">
+        <h1>Visual Cryptography</h1>
+        <p class="subtitle">Progress Review II · Design &amp; Implementation Review</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="site-container">
+    <nav role="tablist" aria-label="Visual Cryptography Sections">
+      <button id="tab-generate" role="tab" aria-selected="true" aria-controls="panel-generate" tabindex="0">Generate</button>
+      <button id="tab-reconstruct" role="tab" aria-selected="false" aria-controls="panel-reconstruct" tabindex="-1">Reconstruct</button>
+      <button id="tab-compare" role="tab" aria-selected="false" aria-controls="panel-compare" tabindex="-1">Compare</button>
+      <button id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" tabindex="-1">About</button>
+    </nav>
+
+    <section id="panel-generate" role="tabpanel" aria-labelledby="tab-generate">
+      <!-- Generated dynamically by generate.js -->
+    </section>
+
+    <section id="panel-reconstruct" role="tabpanel" aria-labelledby="tab-reconstruct" hidden>
+      <!-- Generated dynamically by reconstruct.js -->
+    </section>
+
+    <section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+      <!-- Generated dynamically by compare.js -->
+    </section>
+
+    <section id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+      <!-- Generated dynamically by about.js -->
+    </section>
+  </main>
+
+  <footer id="site-footer">Visual Cryptography | Progress Review II | SSPU | 10 October 2026</footer>
+</body>
+</html>

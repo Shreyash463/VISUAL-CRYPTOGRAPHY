@@ -1,0 +1,74 @@
+/* Design Tokens for Visual Cryptography */
+:root {
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --text: #1B2430;
+  --muted: #5B6675;
+  --accent: #1F4FD8;
+  --accent-contrast: #FFFFFF;
+  --border: #D9DEE5;
+  --success: #1E7B4B;
+  --warn: #B45309;
+  --error: #B42318;
+
+  --accent-light: rgba(31, 79, 216, 0.08);
+  --success-light: rgba(30, 123, 75, 0.1);
+  --warn-light: rgba(180, 83, 9, 0.1);
+  --error-light: rgba(180, 35, 24, 0.1);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --font-size-base: 16px;
+  --line-height-base: 1.55;
+
+  --font-size-h1: 1.75rem;
+  --font-size-h2: 1.25rem;
+  --font-size-h3: 1.05rem;
+  --font-size-sm: 0.875rem;
+  --font-size-xs: 0.75rem;
+
+  --weight-regular: 400;
+  --weight-semibold: 600;
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+
+  --radius-sm: 6px;
+  --radius-card: 8px;
+  --radius-pill: 999px;
+
+  --container-max-w: 1080px;
+  --container-padding: 16px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --container-padding: 24px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F141B;
+    --surface: #171E27;
+    --text: #E6EAF0;
+    --muted: #9AA6B5;
+    --accent: #7AA2FF;
+    --accent-contrast: #0F141B;
+    --border: #2A3441;
+    --success: #4CC38A;
+    --warn: #F0A04B;
+    --error: #F97066;
+
+    --accent-light: rgba(122, 162, 255, 0.12);
+    --success-light: rgba(76, 195, 138, 0.15);
+    --warn-light: rgba(240, 160, 75, 0.15);
+    --error-light: rgba(249, 112, 102, 0.15);
+  }
+}
