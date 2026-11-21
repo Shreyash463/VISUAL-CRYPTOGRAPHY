@@ -168,12 +168,16 @@ export const AboutPage: React.FC = () => {
       </div>
 
       {/* Institutional Branding Block (SSPU Emblem & Motto) */}
-      <div className="p-6 rounded-2xl bg-[var(--panel)] border border-[var(--border)] mb-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-        <img
-          src="/sspu-logo.png"
-          alt="SSPU Logo"
-          className="h-16 w-auto object-contain shrink-0"
-        />
+      <div className="p-6 rounded-2xl bg-[var(--panel)] border border-[var(--border)] mb-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-sm">
+        <div className="bg-white p-2.5 rounded-2xl shadow-sm shrink-0 flex items-center justify-center border border-white/20">
+          <img
+            src="/sspu-logo.png"
+            alt="SSPU Official Emblem"
+            width={64}
+            height={75}
+            className="h-16 w-auto object-contain shrink-0"
+          />
+        </div>
         <div className="flex-1">
           <h3 className="font-display font-bold text-base text-[var(--text)]">
             {PROJECT_CONFIG.institution}
@@ -186,24 +190,31 @@ export const AboutPage: React.FC = () => {
       </div>
 
       {/* Team Block from src/config/project.ts */}
-      <div className="p-6 rounded-2xl bg-[var(--panel)] border border-[var(--border)]">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="p-6 rounded-2xl bg-[var(--panel)] border border-[var(--border)] shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
           <Users className="w-5 h-5 text-[var(--accent)]" />
           <h2 className="font-display font-bold text-base text-[var(--text)]">Project Team</h2>
         </div>
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {PROJECT_CONFIG.team.members.map((m) => (
-            <div key={m.prn} className="p-3.5 rounded-xl bg-[var(--panel-alt)] border border-[var(--border)]">
-              <span className="font-bold text-xs text-[var(--text)] block">{m.name}</span>
-              <span className="text-[11px] text-[var(--muted)] block mt-0.5">{m.role}</span>
-              <span className="text-[10px] font-mono text-[var(--accent)] block mt-1">{m.prn}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-[var(--border)] text-xs text-[var(--muted)] font-mono">
-          Faculty Mentorship: <strong className="text-[var(--text)]">{PROJECT_CONFIG.team.mentor}</strong>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          {PROJECT_CONFIG.team.members.map((m, idx) => {
+            const initial = m.name.charAt(0);
+            return (
+              <motion.div
+                key={m.name}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.08, duration: 0.3 }}
+                whileHover={{ y: -3 }}
+                className="p-4 rounded-xl bg-[var(--panel-alt)] border border-[var(--border)] flex flex-col items-center text-center group hover:border-[var(--accent)]/50 transition-all shadow-xs"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-rose-600 text-white font-display font-bold text-lg flex items-center justify-center mb-3 shadow-md group-hover:scale-105 transition-transform">
+                  {initial}
+                </div>
+                <h3 className="font-display font-bold text-sm text-[var(--text)]">{m.name}</h3>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

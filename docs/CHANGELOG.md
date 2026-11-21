@@ -4,6 +4,39 @@ All notable changes to the Visual Cryptography project for the SSPU Final Review
 
 ---
 
+## [3.1.0] - 2026-11-21: VeilShare v3.1 · Multi-Share Dynamic Reconstruct, Logo Restoration & Final Polish
+
+### Added & Enhanced
+- **Dynamic Multi-Share Reconstruct ($n \in [2..6]$)**:
+  - Dynamic slot architecture automatically scaling from 2 up to 6 slots based on PNG `vc_n` metadata or manual selection.
+  - Multi-file master drop zone accepting multiple PNG shares simultaneously with automatic slot assignment via `vc_index`.
+  - Duplicate share detection ignoring duplicate uploads with a friendly notification toast.
+  - Group mismatch and dimension mismatch warning banners.
+  - One-click `"Use shares from this session"` loading all $n$ shares into their respective slots.
+  - Disabled primary `"Reveal Secret"` button until all $n$ shares are present, displaying helper message naming missing indexes (e.g., `"Need 2 more shares: 2, 4"`).
+  - Optional `"Security demo: reveal with missing shares"` action demonstrating Shannon perfect secrecy / Naor-Shamir threshold by showing random noise with the required caption:
+    > *"Incomplete set: this is random noise, exactly as the security property promises."*
+    and badge `"Security Demonstration · Incomplete Set"`. Never mislabelled as "Revealed" or "Decrypted".
+  - Pixel-exact unblurred XOR reveal display (`imageRendering: "pixelated"`), byte-exact and 1:1 identical to downloaded files.
+- **SSPU Official Emblem Restoration**:
+  - Restored genuine high-resolution red emblem with Sanskrit motto ("वसुधैव कुटुम्बकम्") from `public/static/img/sspu-logo.png`.
+  - Encased in a white rounded badge (`bg-white p-1 rounded-xl shadow-xs`) ensuring maximum contrast and clarity in both dark noise and light pastel themes.
+  - Verified `naturalWidth > 0` across Navbar, Hero, About, and institutional Footer.
+- **Team Names Standardization**:
+  - Exactly 5 first names in alphabetical/formal order: **Shreyash**, **Ayushi**, **Niharika**, **Yash**, **Kunal**.
+  - Completely purged all legacy surnames, roles, PRNs, and placeholder names ("Team Member", Dixit, Sharma, Kulkarni, Joshi, Patel) across codebase and documentation.
+- **Cinematic Noise Curtain Intro**:
+  - 1.8–2.2s cinematic noise field resolving into white SSPU emblem badge + "VeilShare" wordmark, followed by a curtain split revealing the hero.
+  - Gated to once per browser session via `sessionStorage`.
+  - Instantly skippable via click, Esc, or any key; supports `prefers-reduced-motion` (200ms fade) and `?intro=0` query parameter for E2E testing.
+- **Compact Viewport Optimization**:
+  - Compact share grid (`max-h-[520px] overflow-y-auto`) and compact cards for $n \ge 4$ shares at 1366×768, keeping sticky bottom action bar always accessible.
+- **Comprehensive Verification**:
+  - 6/6 Vitest unit tests covering $n=2..6$ XOR, Shannon perfect secrecy on subsets, CMY overlay, and metrics.
+  - 12/12 Playwright Chrome real-browser E2E tests validating logo rendering, team names, cinematic intro, multi-share reconstruct, security demo, and accessibility.
+
+---
+
 ## [3.0.0] - 2026-11-21: VeilShare v3 · On-Device Cryptographic Engine & HAYAT-Grade Design System
 
 ### Added

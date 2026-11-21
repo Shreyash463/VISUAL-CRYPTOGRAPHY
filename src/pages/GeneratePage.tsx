@@ -575,7 +575,13 @@ export const GeneratePage: React.FC = () => {
 
               {/* Tab 1: SHARES (Shown Big with Individual Download Buttons) */}
               {activeResultTab === "shares" && (
-                <div className={`grid gap-5 ${shareUrls.length === 2 ? "sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
+                <div
+                  className={`grid gap-4 ${
+                    shareUrls.length === 2
+                      ? "sm:grid-cols-2"
+                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  } ${shareUrls.length >= 4 ? "max-h-[520px] overflow-y-auto pr-1" : ""}`}
+                >
                   {shareUrls.map((s) => (
                     <ImageFrame
                       key={s.index}
@@ -588,6 +594,7 @@ export const GeneratePage: React.FC = () => {
                       height={s.height}
                       pngBytes={s.bytes}
                       downloadLabel="Download Share PNG"
+                      compact={shareUrls.length >= 4}
                     />
                   ))}
                 </div>

@@ -12,6 +12,7 @@ export interface ImageFrameProps {
   pngBytes?: Uint8Array;
   downloadLabel?: string;
   className?: string;
+  compact?: boolean;
 }
 
 export const ImageFrame: React.FC<ImageFrameProps> = ({
@@ -25,6 +26,7 @@ export const ImageFrame: React.FC<ImageFrameProps> = ({
   pngBytes,
   downloadLabel = "Download PNG",
   className = "",
+  compact = false,
 }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -66,11 +68,17 @@ export const ImageFrame: React.FC<ImageFrameProps> = ({
         </div>
 
         {/* Image Display with Zoom capability */}
-        <div className="relative group flex items-center justify-center p-4 bg-black/40 min-h-[220px] max-h-[340px] overflow-hidden">
+        <div
+          className={`relative group flex items-center justify-center bg-black/40 overflow-hidden ${
+            compact ? "p-2 min-h-[140px] max-h-[220px]" : "p-4 min-h-[220px] max-h-[340px]"
+          }`}
+        >
           <img
             src={imgUrl}
             alt={title}
-            className="max-h-[300px] w-auto max-w-full object-contain rounded select-none shadow-xs"
+            className={`w-auto max-w-full object-contain rounded select-none shadow-xs ${
+              compact ? "max-h-[190px]" : "max-h-[300px]"
+            }`}
             style={{ imageRendering: "pixelated" }}
           />
 

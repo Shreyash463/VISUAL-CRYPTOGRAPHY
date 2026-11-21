@@ -23,11 +23,15 @@ export const Navbar: React.FC = () => {
           to="/"
           className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg p-1"
         >
-          <img
-            src="/sspu-logo.png"
-            alt="SSPU Official Emblem"
-            className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
-          />
+          <div className="bg-white p-1 rounded-xl shadow-xs shrink-0 flex items-center justify-center border border-white/20">
+            <img
+              src="/sspu-logo.png"
+              alt="SSPU Official Emblem"
+              width={34}
+              height={40}
+              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+            />
+          </div>
           <div className="flex flex-col">
             <span className="font-display font-bold text-lg tracking-tight text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
               VeilShare

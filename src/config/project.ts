@@ -1,7 +1,5 @@
 export interface TeamMember {
   name: string;
-  role: string;
-  prn: string;
 }
 
 export interface ResearchPaper {
@@ -24,7 +22,6 @@ export interface ProjectConfig {
   academicYear: string;
   team: {
     name: string;
-    mentor: string;
     members: TeamMember[];
   };
   papers: ResearchPaper[];
@@ -40,13 +37,13 @@ export const PROJECT_CONFIG: ProjectConfig = {
   reviewStage: "Final Review",
   academicYear: "2026-2027",
   team: {
-    name: "VeilShare Research Team",
-    mentor: "Dr. Faculty Mentor (Dept. of CS & IT, SSPU)",
+    name: "VeilShare Team",
     members: [
-      { name: "Shreyash Dixit", role: "Lead Full-Stack & Cryptographic Engine", prn: "2023BTECHCS042" },
-      { name: "Aditi Sharma", role: "Cryptanalysis & Color Halftoning", prn: "2023BTECHCS018" },
-      { name: "Rohan Kulkarni", role: "Mathematical Verification & Benchmarking", prn: "2023BTECHCS029" },
-      { name: "Neha Joshi", role: "Frontend Motion & UI/UX Systems", prn: "2023BTECHCS037" },
+      { name: "Shreyash" },
+      { name: "Ayushi" },
+      { name: "Niharika" },
+      { name: "Yash" },
+      { name: "Kunal" },
     ],
   },
   papers: [

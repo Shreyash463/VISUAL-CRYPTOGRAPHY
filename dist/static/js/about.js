@@ -250,10 +250,10 @@ export function init() {
   ]);
 
   const teamCards = [
-    { name: "Shreyash Dixit", role: "Lead Engineer", sub: "Full-Stack & Algorithms" },
-    { name: "Team Member 2", role: "Security", sub: "Cryptanalysis & Bounds" },
-    { name: "Team Member 3", role: "Frontend", sub: "UI/UX & Accessibility" },
-    { name: "Team Member 4", role: "QA & Verification", sub: "Test Suites & Evaluation" },
+    { name: "VeilShare Contributor", role: "Lead Engineer", sub: "Full-Stack & Algorithms" },
+    { name: "VeilShare Contributor", role: "Security", sub: "Cryptanalysis & Bounds" },
+    { name: "VeilShare Contributor", role: "Frontend", sub: "UI/UX & Accessibility" },
+    { name: "VeilShare Contributor", role: "QA & Verification", sub: "Test Suites & Evaluation" },
   ];
 
   const gridRow = el("div", { style: { display: "grid", "grid-template-columns": "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", "margin-top": "16px" } },

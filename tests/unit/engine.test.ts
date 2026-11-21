@@ -95,7 +95,7 @@ describe("On-Device Cryptographic Engine", () => {
         rgba[i + 3] = 255;
       }
 
-      for (const n of [2, 3, 4, 5]) {
+      for (const n of [2, 3, 4, 5, 6]) {
         const result = generateColorXor(rgba, width, height, n);
         expect(result.shares.length).toBe(n);
         expect(result.width).toBe(width);
@@ -111,7 +111,21 @@ describe("On-Device Cryptographic Engine", () => {
         }
         expect(diff).toBeGreaterThan(width * height * 0.9);
 
-        // Reconstruction
+        // Incomplete set security property: XOR of any subset of < n shares yields pure noise
+        if (n >= 3) {
+          const subset = result.shares.slice(0, n - 1);
+          const partialXor = reconstructColorXor(subset);
+          let noiseDiff = 0;
+          for (let i = 0; i < rgba.length; i += 4) {
+            if (partialXor[i] !== rgba[i] || partialXor[i + 1] !== rgba[i + 1] || partialXor[i + 2] !== rgba[i + 2]) {
+              noiseDiff++;
+            }
+          }
+          // Incomplete set should differ in at least 85% of pixels (random noise)
+          expect(noiseDiff).toBeGreaterThan(width * height * 0.85);
+        }
+
+        // Full Reconstruction with all n shares
         const reconstructed = reconstructColorXor(result.shares);
         expect(reconstructed.length).toBe(rgba.length);
 

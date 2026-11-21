@@ -19,6 +19,8 @@ Thumbs.db
 
 # Node
 node_modules/
+test-results/
+playwright-report/
 
 .vercel
 .env*

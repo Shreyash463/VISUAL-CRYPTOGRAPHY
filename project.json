@@ -7,12 +7,12 @@
   "academic_year": "2026-2027",
   "team": {
     "team_name": "VeilShare Team",
-    "mentor": "Prof. Faculty Mentor (SSPU)",
     "members": [
-      { "name": "Shreyash Dixit", "role": "Lead Full-Stack & Algorithm Engineer", "prn": "SSPU-CS-2026-01" },
-      { "name": "Team Member 2", "role": "Security & Cryptanalysis", "prn": "SSPU-CS-2026-02" },
-      { "name": "Team Member 3", "role": "UI/UX & Frontend Systems", "prn": "SSPU-CS-2026-03" },
-      { "name": "Team Member 4", "role": "Quality Assurance & Evaluation", "prn": "SSPU-CS-2026-04" }
+      { "name": "Shreyash" },
+      { "name": "Ayushi" },
+      { "name": "Niharika" },
+      { "name": "Yash" },
+      { "name": "Kunal" }
     ]
   },
   "papers": [

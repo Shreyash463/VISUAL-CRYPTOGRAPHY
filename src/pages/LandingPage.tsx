@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PROJECT_CONFIG } from "../config/project";
 import { PATTERNS_2X2 } from "../engine/colorOverlay";
+import { CinematicIntro } from "../components/CinematicIntro";
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -110,6 +111,8 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden">
+      {/* Cinematic Intro: Plays once per session, skippable */}
+      <CinematicIntro />
       {/* Background radial glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/10 blur-[140px] pointer-events-none" />
 
@@ -117,9 +120,17 @@ export const LandingPage: React.FC = () => {
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-20 flex flex-col lg:flex-row items-center justify-between gap-12">
         {/* Left Column: Heading & CTAs */}
         <div className="flex-1 max-w-2xl text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/30 mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>On-Device Cryptography Studio · Zero Server Roundtrips</span>
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold bg-[var(--panel)] border border-[var(--border)] text-[var(--text)] mb-6 shadow-xs">
+            <div className="bg-white p-0.5 rounded-md flex items-center justify-center shrink-0">
+              <img
+                src="/sspu-logo.png"
+                alt="SSPU Official Emblem"
+                width={18}
+                height={21}
+                className="h-4 w-auto object-contain"
+              />
+            </div>
+            <span>SSPU Final Review · On-Device Cryptography Studio</span>
           </div>
 
           <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.08] text-[var(--text)]">
@@ -343,7 +354,15 @@ export const LandingPage: React.FC = () => {
       <footer className="py-12 border-t border-[var(--border)] bg-[var(--panel)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div className="flex items-center gap-4">
-            <img src="/sspu-logo.png" alt="SSPU Logo" className="h-12 w-auto object-contain" />
+            <div className="bg-white p-2 rounded-xl shadow-xs shrink-0 flex items-center justify-center border border-white/20">
+              <img
+                src="/sspu-logo.png"
+                alt="SSPU Official Emblem"
+                width={40}
+                height={47}
+                className="h-10 w-auto object-contain"
+              />
+            </div>
             <div>
               <p className="font-display font-bold text-sm text-[var(--text)]">{PROJECT_CONFIG.institution}</p>
               <p className="text-xs font-mono text-[var(--accent)]">{PROJECT_CONFIG.motto}</p>

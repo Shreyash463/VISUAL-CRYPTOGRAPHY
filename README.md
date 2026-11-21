@@ -1,4 +1,4 @@
-# VeilShare: Visual Cryptography Studio (v3)
+# VeilShare: Visual Cryptography Studio (v3.1)
 **Symbiosis Skills & Professional University (SSPU) · Kiwale, Pune**  
 **School of Computer Science & Engineering · Semester Integrated Project · Final Review**  
 **Live Production URL:** [https://visual-cryptography-rouge.vercel.app](https://visual-cryptography-rouge.vercel.app)
@@ -8,7 +8,14 @@
 ## 1. Overview
 VeilShare is an award-grade, information-theoretically secure Visual Cryptography web studio that decomposes sensitive images into randomized, statistically indistinguishable noise shares. Neither share leaks a single bit of information on its own. The underlying secret emerges only when shares are superimposed.
 
-In **VeilShare v3**, the entire cryptographic pipeline runs **100% On-Device** inside a dedicated client-side Web Worker. Sensitive images never touch any server or cloud database, eliminating serverless cold starts, execution timeouts, and data-leak risks.
+In **VeilShare v3.1**, the entire cryptographic pipeline runs **100% On-Device** inside a dedicated client-side Web Worker. Sensitive images never touch any server or cloud database, eliminating serverless cold starts, execution timeouts, and data-leak risks.
+
+### Project Team (SSPU B.Tech CS & IT · Final Review):
+- **Shreyash**
+- **Ayushi**
+- **Niharika**
+- **Yash**
+- **Kunal**
 
 ### Supported Cryptographic Modes:
 1. **Mode A: Colour Overlay 2-out-of-2 (P5, Hou 2003)**:
@@ -40,7 +47,7 @@ npm run dev
 # Run Vitest unit & property test suite (6 tests)
 npm test
 
-# Run Playwright real-browser E2E suite in Google Chrome (8 tests)
+# Run Playwright real-browser E2E suite in Google Chrome (12 tests)
 npm run test:e2e
 
 # Build production bundle
@@ -52,6 +59,10 @@ npm run build
 ## 3. Security Guarantees & Privacy Telemetry
 - **Zero Cloud Transmission**:
   Images and shares are processed in-memory inside the client's Web Worker. Zero bytes of image data are sent to any server.
+- **Dynamic Multi-Share Reconstruct**:
+  Supports $n \in [2..6]$ shares with automatic slot mapping via PNG `vc_index` and `vc_n` metadata.
+- **Shannon Perfect Secrecy Demonstration**:
+  Reveal button is disabled until all $n$ shares are present. An interactive "Security demo: reveal with missing shares" button demonstrates that combining fewer than $n$ shares yields pure uncorrelated noise.
 - **Real-Time Network Telemetry Auditor**:
   A live monitor in the navigation bar intercepts `fetch`, `XMLHttpRequest`, and `navigator.sendBeacon` to verify that `Data Sent: 0`.
 - **Session Wipe**:
@@ -76,5 +87,5 @@ npm run build
 ---
 
 ## 5. Verification & Test Results
-- **Vitest Unit Suite**: 6 tests passed (100% coverage of PNG chunks, CMY halftoning, 2×2 codebook, byte-exact XOR roundtrips).
-- **Playwright E2E Suite (Google Chrome)**: 8 real-browser end-to-end tests passed against production `https://visual-cryptography-rouge.vercel.app` (Landing navigation, generation, download verification, full-colour reconstruction, XOR roundtrip, session handoff, live superposition simulator, Escape wipe, mobile responsiveness, and Axe-core accessibility).
+- **Vitest Unit Suite**: 6 tests passed (100% coverage of PNG chunks, CMY halftoning, 2×2 codebook, byte-exact XOR roundtrips, incomplete set entropy).
+- **Playwright E2E Suite (Google Chrome)**: 12 real-browser end-to-end tests passed (Landing navigation, generation, downloads, full-colour reconstruction, XOR roundtrip, session handoff, live superposition simulator, Escape wipe, mobile responsiveness, Axe-core accessibility, SSPU logo loading, 5-member team validation, cinematic intro, and multi-share reconstruct with security demo).

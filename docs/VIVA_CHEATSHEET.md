@@ -168,3 +168,34 @@ export function fillCryptoRandomValues(buffer: Uint8Array): Uint8Array {
 ```
 This guarantees cryptographically uniform entropy across arbitrary array sizes while adhering strictly to browser platform boundaries.
 
+---
+
+### Q13: Why does an $(n, n)$ threshold scheme strictly require all $n$ shares, and what happens if fewer than $n$ shares are combined?
+**Answer:**  
+In an $(n, n)$ threshold secret sharing scheme (such as Wang et al. 2005 XOR secret sharing), the secret $S$ is split into $n$ shares $S_1, S_2, \dots, S_n$ such that:
+$$S = S_1 \oplus S_2 \oplus \dots \oplus S_n$$
+Each of the first $n-1$ shares is generated as independent, uniformly distributed random noise:
+$$S_i \sim \mathcal{U}(\{0, 1\}^L), \quad \forall i \in \{1, \dots, n-1\}$$
+The final share $S_n$ is computed to satisfy the closure constraint:
+$$S_n = S \oplus \left(\bigoplus_{i=1}^{n-1} S_i\right)$$
+If an adversary or receiver possesses any subset of $k$ shares where $k < n$:
+1. The missing shares act as a one-time pad (OTP) of length $L$.
+2. For every candidate secret $S'$, there exists a unique assignment of the missing share(s) that satisfies the equation.
+3. Therefore, the conditional probability distribution of the secret given $k < n$ shares is identical to the prior probability distribution:
+$$P(S = s \mid S_1, \dots, S_k) = P(S = s)$$
+4. The mutual information is identically zero: $I(S; S_1, \dots, S_k) = 0$.
+Combining fewer than $n$ shares yields **pure, uncorrelated random noise**, leaking exactly zero bits of information.
+
+---
+
+### Q14: How does VeilShare's live "Security Demonstration" prove Shannon perfect secrecy to examiners?
+**Answer:**  
+In VeilShare Reconstruct Studio, whenever a user has loaded fewer than the required $n$ shares (for instance, 2 out of 4 shares):
+1. The primary "Reveal Secret" button is automatically disabled to prevent confusing incomplete reconstructions with valid secrets.
+2. An interactive **"Security demo: reveal with missing shares"** button appears.
+3. Clicking this button performs on-device visual superposition / XOR on the available subset of shares.
+4. The application renders the resulting noise and explicitly labels it:
+   > *"Incomplete set: this is random noise, exactly as the security property promises."*
+5. This gives students an undeniable, live interactive demonstration during the viva defense to prove that information-theoretic security holds and that without all $n$ shares, the cryptographic secret remains mathematically unrecoverable.
+
+

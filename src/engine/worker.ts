@@ -346,28 +346,32 @@ self.onmessage = async (e: MessageEvent) => {
         }
       }
 
-      // Check 2: Same file twice
+      // Check 2: Same file twice (across all pairs)
       if (files.length >= 2) {
-        const b1 = new Uint8Array(files[0].bytes);
-        const b2 = new Uint8Array(files[1].bytes);
-        if (b1.length === b2.length) {
-          let identical = true;
-          for (let i = 0; i < Math.min(b1.length, 1000); i++) {
-            if (b1[i] !== b2[i]) {
-              identical = false;
-              break;
+        for (let i = 0; i < files.length; i++) {
+          for (let j = i + 1; j < files.length; j++) {
+            const b1 = new Uint8Array(files[i].bytes);
+            const b2 = new Uint8Array(files[j].bytes);
+            if (b1.length === b2.length) {
+              let identical = true;
+              for (let k = 0; k < Math.min(b1.length, 1000); k++) {
+                if (b1[k] !== b2[k]) {
+                  identical = false;
+                  break;
+                }
+              }
+              if (identical) {
+                self.postMessage({
+                  type: "ERROR",
+                  id,
+                  error: {
+                    code: "IDENTICAL_SHARES",
+                    message: `Shares "${files[i].name}" and "${files[j].name}" contain the exact same data. Distinct shares are required to reconstruct.`,
+                  },
+                });
+                return;
+              }
             }
-          }
-          if (identical) {
-            self.postMessage({
-              type: "ERROR",
-              id,
-              error: {
-                code: "IDENTICAL_SHARES",
-                message: "Both slots contain the exact same share file. Two distinct shares are required to reconstruct.",
-              },
-            });
-            return;
           }
         }
       }
@@ -423,7 +427,9 @@ self.onmessage = async (e: MessageEvent) => {
       let outH = baseH;
 
       if (scheme === "color_overlay") {
-        rawRecRgba = computeSubtractiveStack(files[0].rgba, files[1] ? files[1].rgba : files[0].rgba);
+        rawRecRgba = files.length >= 2
+          ? computeSubtractiveStack(files[0].rgba, files[1].rgba)
+          : files[0].rgba.slice();
         if (sufficient) {
           outW = baseW / 2;
           outH = baseH / 2;
@@ -433,14 +439,17 @@ self.onmessage = async (e: MessageEvent) => {
         rawRecRgba = reconstructColorXor(files.map((f) => f.rgba));
         enhancedRecRgba = rawRecRgba;
       } else if (scheme === "overlay") {
-        rawRecRgba = new Uint8Array(files[0].rgba.length);
-        const second = files[1] ? files[1].rgba : files[0].rgba;
-        for (let i = 0; i < rawRecRgba.length; i += 4) {
-          const v = Math.min(files[0].rgba[i], second[i]);
-          rawRecRgba[i] = v;
-          rawRecRgba[i + 1] = v;
-          rawRecRgba[i + 2] = v;
-          rawRecRgba[i + 3] = 255;
+        if (files.length >= 2) {
+          rawRecRgba = new Uint8Array(files[0].rgba.length);
+          for (let i = 0; i < rawRecRgba.length; i += 4) {
+            const v = Math.min(files[0].rgba[i], files[1].rgba[i]);
+            rawRecRgba[i] = v;
+            rawRecRgba[i + 1] = v;
+            rawRecRgba[i + 2] = v;
+            rawRecRgba[i + 3] = 255;
+          }
+        } else {
+          rawRecRgba = files[0].rgba.slice();
         }
         enhancedRecRgba = rawRecRgba;
       } else {
