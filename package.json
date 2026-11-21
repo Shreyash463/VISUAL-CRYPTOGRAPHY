@@ -1,32 +1,49 @@
 {
-  "name": "visual-cryptography",
-  "version": "1.0.0",
-  "description": "A secret image is turned into several noise-like shares and becomes visible only when the right shares are combined. Decoding in the baseline Naor–Shamir (1994) scheme is performed by laying printed transparencies over each other, requiring no key knowledge and no cryptographic computation. The system provides both a 2-out-of-2 overlay stacking mode with measured contrast loss and pixel expansion, and an (n,n) XOR secret sharing mode (Wang et al. 2005) with no pixel expansion and exact mathematical reconstruction.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "test": "tests"
-  },
+  "name": "veilshare",
+  "private": true,
+  "version": "3.0.0",
+  "type": "module",
   "scripts": {
-    "test": "python -m pytest",
-    "e2e": "python scripts/run_e2e_tests.py",
-    "e2e:prod": "python scripts/run_e2e_tests.py --prod"
+    "dev": "vite --port=5173 --host=127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --port=4173 --host=127.0.0.1",
+    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "test:e2e": "node ./node_modules/@playwright/test/cli.js test",
+    "lint": "node ./node_modules/typescript/bin/tsc --noEmit"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY/issues"
-  },
-  "homepage": "https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY#readme",
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
-    "@fontsource/space-grotesk": "^5.3.0"
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "fflate": "^0.8.2",
+    "framer-motion": "^14.14.0",
+    "gsap": "^3.15.1",
+    "lenis": "^1.3.27",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "react-router-dom": "^7.18.5",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.8"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }

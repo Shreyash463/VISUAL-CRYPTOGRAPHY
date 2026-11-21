@@ -139,3 +139,32 @@ To prevent this failure mode:
 8. **P8 (Rura et al. 2017):** Application to **electronic voting systems** ensuring tamper-evident voter ballot auditability.
 9. **P9 (Mursi et al. 2014):** Comprehensive taxonomy comparing traditional, extended, halftone, and progressive visual cryptography.
 10. **P10 (Leung et al. 2008):** Formal information-theoretic cryptanalysis and security bounds for color visual secret sharing schemes.
+
+---
+
+### Q11: Why did VeilShare v3 transition to an entirely On-Device Web Worker architecture?
+**Answer:**  
+In conventional web architectures, user images are transmitted over HTTPS to a cloud server running Python or Node for processing. For cryptographic privacy and biometric security (P7, P8), this introduces critical vulnerabilities:
+1. **Zero Cloud Transmission:** By executing all cryptographic algorithms directly in the user's browser using a dedicated Web Worker and the Web Crypto API (`crypto.getRandomValues`), sensitive images **never leave the client machine**. Even if the hosting infrastructure is compromised, zero secret bytes exist on any server.
+2. **Deterministic Availability:** The application runs entirely on static assets served by Vercel's global edge network (`dist/index.html`). There are no cold starts, container startup latencies, or serverless execution timeout limits (e.g. Vercel 10s execution caps).
+3. **Real-Time Network Telemetry Auditor:** The application intercepts `fetch`, `XMLHttpRequest`, and `navigator.sendBeacon` to display a live network monitor in the header showing `"Data Sent: 0"`, proving mathematically that zero bytes of image data escape to the network.
+
+---
+
+### Q12: How does VeilShare safely handle entropy quotas and memory limits in the Web Crypto API?
+**Answer:**  
+The W3C Web Crypto specification mandates a strict quota: calling `crypto.getRandomValues(buffer)` with a buffer larger than **65,536 bytes (64 KB)** throws a fatal `QuotaExceededError`.  
+For high-resolution image secret sharing (e.g., $640\times 640\times 4 = 1,638,400$ bytes), passing the full buffer directly would crash the client.  
+VeilShare implements an entropy allocation chunker (`fillCryptoRandomValues` in `src/engine/cryptoRandom.ts`):
+```ts
+export function fillCryptoRandomValues(buffer: Uint8Array): Uint8Array {
+  const CHUNK_SIZE = 65536;
+  for (let offset = 0; offset < buffer.length; offset += CHUNK_SIZE) {
+    const end = Math.min(offset + CHUNK_SIZE, buffer.length);
+    crypto.getRandomValues(buffer.subarray(offset, end));
+  }
+  return buffer;
+}
+```
+This guarantees cryptographically uniform entropy across arbitrary array sizes while adhering strictly to browser platform boundaries.
+
