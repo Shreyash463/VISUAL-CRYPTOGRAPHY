@@ -16,3 +16,10 @@ ENV/
 Thumbs.db
 .vscode/
 .idea/
+
+# Node
+node_modules/
+
+.vercel
+.env*
+scratch/

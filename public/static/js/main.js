@@ -112,6 +112,27 @@ function initTabs() {
   syncFromHash();
 }
 
+// Global error handling to prevent UI lockout and clear loading states
+window.addEventListener("error", (event) => {
+  console.error("Global application error:", event.error || event.message);
+  document.querySelectorAll("button[disabled]").forEach((btn) => {
+    if (btn.classList.contains("btn-loading") || btn.textContent.includes("…")) {
+      btn.disabled = false;
+      btn.classList.remove("btn-loading");
+    }
+  });
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
+  document.querySelectorAll("button[disabled]").forEach((btn) => {
+    if (btn.classList.contains("btn-loading") || btn.textContent.includes("…")) {
+      btn.disabled = false;
+      btn.classList.remove("btn-loading");
+    }
+  });
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initLogoSlot();

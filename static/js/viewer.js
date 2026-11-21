@@ -43,7 +43,13 @@ export function createImageFrame(src, alt = "") {
   checkPixelation(img);
   frame.appendChild(img);
 
-  return { frame, img };
+  return {
+    frame,
+    img,
+    get classList() {
+      return frame.classList;
+    },
+  };
 }
 
 export function createFitControl(img, scrollContainer) {

@@ -1,11 +1,13 @@
 /**
  * Generate tab module (FR-1, FR-3, FR-4, FR-5, FR-8).
+ * Extended with full Colour Visual Cryptography (Mode A: P5 CMY, Mode B: P6 XOR),
+ * automatic color detection, procedural demo mode, and ZIP packaging.
  */
 import { postForm } from "./api.js";
 import { el, base64ToBlob, setBusy, showError, createIcon, createBadge } from "./ui.js";
 import { setLastRun, clearRun, trackUrl } from "./state.js";
 import { showToast } from "./toast.js";
-import { getTimestamp, getShareFilename, triggerDownload, renderDownloadBar } from "./download.js";
+import { getTimestamp, getShareFilename, triggerDownload, renderDownloadBar, createZipBlob } from "./download.js";
 import { createImageFrame, createRevealSlider, openInspector } from "./viewer.js";
 import { renderMetricsPanel } from "./metrics.js";
 import { renderStackingDemo } from "./stacking.js";
@@ -34,6 +36,49 @@ function createSeededNoiseCanvas(seed) {
   return canvas;
 }
 
+/**
+ * Procedurally generate a vibrant, colorful SSPU demonstration image.
+ */
+export function generateProceduralDemoImage() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 240;
+  canvas.height = 240;
+  const ctx = canvas.getContext("2d");
+
+  // Pure white background
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, 240, 240);
+
+  // Concentric vibrant rings
+  ctx.beginPath();
+  ctx.arc(120, 120, 100, 0, Math.PI * 2);
+  ctx.fillStyle = "#E5323F"; // Crimson red
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(120, 120, 75, 0, Math.PI * 2);
+  ctx.fillStyle = "#00A8FF"; // Cyan
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(120, 120, 50, 0, Math.PI * 2);
+  ctx.fillStyle = "#FFD700"; // Gold / Yellow
+  ctx.fill();
+
+  // Central star / monogram
+  ctx.fillStyle = "#141B30";
+  ctx.font = "bold 28px 'Space Grotesk', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SSPU", 120, 120);
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(new File([blob], "sspu_demo_secret.png", { type: "image/png" }));
+    }, "image/png");
+  });
+}
+
 export function init() {
   const panel = document.getElementById("panel-generate");
   if (!panel) return;
@@ -47,16 +92,16 @@ export function init() {
 
   const heroSummary = document.createElement("summary");
   heroSummary.appendChild(createIcon("i-info"));
-  heroSummary.appendChild(document.createTextNode(" How it works"));
+  heroSummary.appendChild(document.createTextNode(" How Visual Cryptography Works"));
   heroDetails.appendChild(heroSummary);
 
   const heroRow = document.createElement("div");
   heroRow.className = "hero-cards-row";
 
   const stepsData = [
-    { num: "1", title: "Split", text: "the secret image becomes noise-like shares.", icon: "i-layers" },
-    { num: "2", title: "Distribute", text: "no single share reveals anything.", icon: "i-lock" },
-    { num: "3", title: "Combine", text: "the right shares together reveal the secret.", icon: "i-eye" },
+    { num: "1", title: "Split", text: "The secret image is split into noise-like shares.", icon: "i-layers" },
+    { num: "2", title: "Distribute", text: "No individual share leaks a single bit of information.", icon: "i-lock" },
+    { num: "3", title: "Combine", text: "Superimposing shares reveals the secret optically or digitally.", icon: "i-eye" },
   ];
 
   stepsData.forEach((st, idx) => {
@@ -116,7 +161,7 @@ export function init() {
   circle1.textContent = "1";
   step1H.appendChild(circle1);
   const step1Title = document.createElement("span");
-  step1Title.textContent = "1 Upload";
+  step1Title.textContent = "1. Upload Secret Image";
   step1H.appendChild(step1Title);
   step1.appendChild(step1H);
 
@@ -135,11 +180,11 @@ export function init() {
   const uploadIcon = createIcon("i-upload", "icon icon-lg drop-zone-icon");
   dropZoneInner.appendChild(uploadIcon);
   const dropText = document.createElement("p");
-  dropText.textContent = "Drag and drop your image here, or click to browse";
+  dropText.textContent = "Drag & drop image here, or click to browse";
   dropZoneInner.appendChild(dropText);
   const dropHint = document.createElement("p");
   dropHint.className = "help-text";
-  dropHint.textContent = "PNG, JPG, JPEG, BMP · max 5 MB";
+  dropHint.textContent = "Lossless PNG, JPG, BMP · Colour or Grayscale";
   dropZoneInner.appendChild(dropHint);
   dropZone.appendChild(dropZoneInner);
 
@@ -149,6 +194,7 @@ export function init() {
   stepper.appendChild(step1);
 
   let selectedFile = null;
+  let isColorDetected = false;
 
   function updateStep1Validity() {
     circle1.textContent = "";
@@ -161,7 +207,7 @@ export function init() {
     }
   }
 
-  function renderSelectedFile(file) {
+  function renderSelectedFile(file, colorDetected = false) {
     fileRowSlot.textContent = "";
     if (!file) return;
 
@@ -180,11 +226,29 @@ export function init() {
     const nameP = document.createElement("p");
     nameP.className = "file-name";
     nameP.textContent = file.name;
-    const sizeP = document.createElement("p");
+
+    const sizeRow = document.createElement("div");
+    sizeRow.style.display = "flex";
+    sizeRow.style.alignItems = "center";
+    sizeRow.style.gap = "8px";
+
+    const sizeP = document.createElement("span");
     sizeP.className = "help-text";
     sizeP.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+    sizeRow.appendChild(sizeP);
+
+    if (colorDetected) {
+      const colBadge = document.createElement("span");
+      colBadge.className = "color-detect-badge";
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      colBadge.appendChild(dot);
+      colBadge.appendChild(document.createTextNode("Colour detected"));
+      sizeRow.appendChild(colBadge);
+    }
+
     info.appendChild(nameP);
-    info.appendChild(sizeP);
+    info.appendChild(sizeRow);
     row.appendChild(info);
 
     const removeBtn = document.createElement("button");
@@ -194,10 +258,12 @@ export function init() {
     removeBtn.appendChild(document.createTextNode(" Remove"));
     removeBtn.addEventListener("click", () => {
       selectedFile = null;
+      isColorDetected = false;
       fileInput.value = "";
       fileRowSlot.textContent = "";
       dropZone.hidden = false;
       updateStep1Validity();
+      updateSchemeAvailability(false);
     });
     row.appendChild(removeBtn);
 
@@ -205,12 +271,46 @@ export function init() {
     dropZone.hidden = true;
   }
 
-  function handleFile(file) {
+  // Client-side quick color analyzer
+  function analyzeImageColor(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        const canvas = document.createElement("canvas");
+        const w = Math.min(img.naturalWidth || 64, 64);
+        const h = Math.min(img.naturalHeight || 64, 64);
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        let colorPixels = 0;
+        const total = w * h;
+        for (let i = 0; i < imgData.length; i += 4) {
+          const r = imgData[i];
+          const g = imgData[i + 1];
+          const b = imgData[i + 2];
+          const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(b - r));
+          if (maxDiff > 15) colorPixels++;
+        }
+        resolve(colorPixels / total > 0.01);
+      };
+      img.onerror = () => {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        resolve(false);
+      };
+      img.src = url;
+    });
+  }
+
+  async function handleFile(file) {
     showError(errorSlot, null);
     if (!file) return;
     const ext = file.name.split(".").pop().toLowerCase();
     if (!ALLOWED_EXTS.includes(ext)) {
-      showError(errorSlot, "Unsupported file extension. Please upload a PNG, JPG, JPEG, or BMP image.");
+      showError(errorSlot, "Unsupported file format. Please upload a PNG, JPG, JPEG, or BMP image.");
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -218,8 +318,10 @@ export function init() {
       return;
     }
     selectedFile = file;
+    isColorDetected = await analyzeImageColor(file);
     updateStep1Validity();
-    renderSelectedFile(file);
+    renderSelectedFile(file, isColorDetected);
+    updateSchemeAvailability(isColorDetected);
   }
 
   fileInput.addEventListener("change", (e) => {
@@ -252,7 +354,7 @@ export function init() {
     }
   });
 
-  // Step 2: Scheme
+  // Step 2: Scheme Selection (4 Schemes)
   const step2 = document.createElement("div");
   step2.className = "step-item";
   const step2H = document.createElement("div");
@@ -262,73 +364,130 @@ export function init() {
   circle2.appendChild(createIcon("i-check", "icon icon-sm"));
   step2H.appendChild(circle2);
   const step2Title = document.createElement("span");
-  step2Title.textContent = "2 Scheme";
+  step2Title.textContent = "2. Cryptographic Scheme";
   step2H.appendChild(step2Title);
   step2.appendChild(step2H);
+
+  // Keep colour switch row
+  const colorToggleRow = document.createElement("div");
+  colorToggleRow.className = "color-switch-row";
+  colorToggleRow.style.display = "none";
+
+  const labelColor = document.createElement("label");
+  const radioColor = document.createElement("input");
+  radioColor.type = "radio";
+  radioColor.name = "color-pref";
+  radioColor.value = "color";
+  radioColor.checked = true;
+  labelColor.appendChild(radioColor);
+  labelColor.appendChild(document.createTextNode(" Keep colour (recommended)"));
+
+  const labelBw = document.createElement("label");
+  const radioBw = document.createElement("input");
+  radioBw.type = "radio";
+  radioBw.name = "color-pref";
+  radioBw.value = "bw";
+  labelBw.appendChild(radioBw);
+  labelBw.appendChild(document.createTextNode(" Force black & white"));
+
+  colorToggleRow.appendChild(labelColor);
+  colorToggleRow.appendChild(labelBw);
+  step2.appendChild(colorToggleRow);
 
   const radioCardsGroup = document.createElement("div");
   radioCardsGroup.className = "radio-cards-group";
 
-  // Overlay Card
-  const overlayCard = document.createElement("label");
-  overlayCard.className = "radio-card selected";
-  const radioOverlay = document.createElement("input");
-  radioOverlay.type = "radio";
-  radioOverlay.name = "gen-mode";
-  radioOverlay.value = "overlay";
-  radioOverlay.checked = true;
-  overlayCard.appendChild(radioOverlay);
+  // Scheme Card Helper
+  function makeSchemeCard(id, value, titleText, paperBadgeText, descText, isChecked = false) {
+    const card = document.createElement("label");
+    card.className = `radio-card ${isChecked ? "selected" : ""}`;
+    card.id = `card-${id}`;
+    card.setAttribute("role", "radio");
+    card.setAttribute("aria-checked", isChecked ? "true" : "false");
 
-  const overlayContent = document.createElement("div");
-  overlayContent.className = "radio-card-content";
-  const overlayTitle = document.createElement("div");
-  overlayTitle.className = "radio-card-title";
-  const overlayTitleText = document.createElement("span");
-  overlayTitleText.textContent = "Overlay 2-out-of-2 (P1)";
-  const overlayBadge = createBadge("Selected", "success", "i-check");
-  overlayTitle.appendChild(overlayTitleText);
-  overlayTitle.appendChild(overlayBadge);
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "gen-mode";
+    radio.value = value;
+    radio.checked = isChecked;
+    card.appendChild(radio);
 
-  const overlayDesc = document.createElement("div");
-  overlayDesc.className = "radio-card-desc";
-  overlayDesc.textContent = "Baseline Naor-Shamir (1994). 2×2 subpixels per pixel. Decoding by physical stacking without computation.";
-  overlayContent.appendChild(overlayTitle);
-  overlayContent.appendChild(overlayDesc);
-  overlayCard.appendChild(overlayContent);
+    const content = document.createElement("div");
+    content.className = "radio-card-content";
 
-  // XOR Card
-  const xorCard = document.createElement("label");
-  xorCard.className = "radio-card";
-  const radioXor = document.createElement("input");
-  radioXor.type = "radio";
-  radioXor.name = "gen-mode";
-  radioXor.value = "xor";
-  xorCard.appendChild(radioXor);
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "radio-card-title";
+    const tSpan = document.createElement("span");
+    tSpan.textContent = titleText;
+    const badge = createBadge("Selected", "success", "i-check");
+    badge.hidden = !isChecked;
+    badge.style.display = isChecked ? "inline-flex" : "none";
 
-  const xorContent = document.createElement("div");
-  xorContent.className = "radio-card-content";
-  const xorTitle = document.createElement("div");
-  xorTitle.className = "radio-card-title";
-  const xorTitleText = document.createElement("span");
-  xorTitleText.textContent = "XOR (n,n) (P6)";
-  const xorBadge = createBadge("Selected", "success", "i-check");
-  xorBadge.hidden = true;
-  xorTitle.appendChild(xorTitleText);
-  xorTitle.appendChild(xorBadge);
+    titleDiv.appendChild(tSpan);
+    titleDiv.appendChild(badge);
 
-  const xorDesc = document.createElement("div");
-  xorDesc.className = "radio-card-desc";
-  xorDesc.textContent = "Wang et al. (2005). No pixel expansion. Perfect reconstruction when all n shares are combined by XOR.";
-  xorContent.appendChild(xorTitle);
-  xorContent.appendChild(xorDesc);
-  xorCard.appendChild(xorContent);
+    const paperBadge = document.createElement("span");
+    paperBadge.className = "paper-badge";
+    paperBadge.style.margin = "4px 0";
+    paperBadge.style.display = "inline-block";
+    paperBadge.textContent = paperBadgeText;
 
-  radioCardsGroup.appendChild(overlayCard);
-  radioCardsGroup.appendChild(xorCard);
+    const descDiv = document.createElement("div");
+    descDiv.className = "radio-card-desc";
+    descDiv.textContent = descText;
+
+    content.appendChild(titleDiv);
+    content.appendChild(paperBadge);
+    content.appendChild(descDiv);
+    card.appendChild(content);
+
+    return { card, radio, badge };
+  }
+
+  // 1. Colour Overlay (P5 Hou)
+  const scColorOverlay = makeSchemeCard(
+    "color-overlay",
+    "color_overlay",
+    "Colour Overlay 2-out-of-2",
+    "P5 · Hou 2003",
+    "CMY halftoning with 2×2 subpixels. Reconstructs in full colour by physical overlay or display enhancement."
+  );
+
+  // 2. Colour XOR (P6)
+  const scColorXor = makeSchemeCard(
+    "color-xor",
+    "color_xor",
+    "Colour XOR (n, n) Exact",
+    "P6 Extension",
+    "24-bit RGB bitwise XOR. Zero expansion, byte-for-byte exact lossless colour reconstruction."
+  );
+
+  // 3. B/W Overlay (P1 Naor-Shamir)
+  const scBwOverlay = makeSchemeCard(
+    "bw-overlay",
+    "overlay",
+    "B/W Overlay 2-out-of-2",
+    "P1 · Naor-Shamir 1994",
+    "Baseline visual cryptography. 2×2 subpixels. Physical transparency overlay decoding.",
+    true
+  );
+
+  // 4. B/W XOR (P6 Wang)
+  const scBwXor = makeSchemeCard(
+    "bw-xor",
+    "xor",
+    "B/W XOR (n, n)",
+    "P6 · Wang 2005",
+    "Bitwise modular addition. Zero expansion, bit-identical black & white reconstruction."
+  );
+
+  const schemeCards = [scColorOverlay, scColorXor, scBwOverlay, scBwXor];
+
+  schemeCards.forEach(({ card }) => radioCardsGroup.appendChild(card));
   step2.appendChild(radioCardsGroup);
   stepper.appendChild(step2);
 
-  // Step 3: Shares
+  // Step 3: Shares Count
   const step3 = document.createElement("div");
   step3.className = "step-item";
   const step3H = document.createElement("div");
@@ -338,7 +497,7 @@ export function init() {
   circle3.appendChild(createIcon("i-check", "icon icon-sm"));
   step3H.appendChild(circle3);
   const step3Title = document.createElement("span");
-  step3Title.textContent = "3 Shares";
+  step3Title.textContent = "3. Number of Shares (n)";
   step3H.appendChild(step3Title);
   step3.appendChild(step3H);
 
@@ -346,15 +505,22 @@ export function init() {
   sharesWrapper.className = "form-group";
   const overlayShareNote = document.createElement("p");
   overlayShareNote.className = "help-text";
-  overlayShareNote.textContent = "2 shares (fixed)";
+  overlayShareNote.id = "overlay-share-note";
+  overlayShareNote.textContent = "2 shares (fixed for overlay superposition)";
 
   const xorSelectGroup = document.createElement("div");
+  xorSelectGroup.id = "xor-select-group";
   xorSelectGroup.hidden = true;
+  xorSelectGroup.style.display = "none";
   const xorSelectLabel = document.createElement("label");
   xorSelectLabel.className = "form-label text-sm";
-  xorSelectLabel.textContent = "Number of shares (n)";
+  xorSelectLabel.id = "xor-n-label";
+  xorSelectLabel.htmlFor = "xor-n-select";
+  xorSelectLabel.textContent = "Number of shares n (Wang et al. 2005 XOR secret sharing, 2 to 6 shares):";
   const xorSelect = document.createElement("select");
   xorSelect.className = "form-select";
+  xorSelect.id = "xor-n-select";
+  xorSelect.name = "n";
   [2, 3, 4, 5, 6].forEach((n) => {
     const opt = document.createElement("option");
     opt.value = String(n);
@@ -369,28 +535,75 @@ export function init() {
   step3.appendChild(sharesWrapper);
   stepper.appendChild(step3);
 
-  function updateModeSelection() {
-    if (radioOverlay.checked) {
-      overlayCard.classList.add("selected");
-      xorCard.classList.remove("selected");
-      overlayBadge.hidden = false;
-      xorBadge.hidden = true;
-      overlayShareNote.hidden = false;
-      xorSelectGroup.hidden = true;
-    } else {
-      overlayCard.classList.remove("selected");
-      xorCard.classList.add("selected");
-      overlayBadge.hidden = true;
-      xorBadge.hidden = false;
-      overlayShareNote.hidden = true;
-      xorSelectGroup.hidden = false;
-    }
+  function getSelectedMode() {
+    const checked = schemeCards.find((c) => c.radio.checked);
+    return checked ? checked.radio.value : "overlay";
   }
 
-  radioOverlay.addEventListener("change", updateModeSelection);
-  radioXor.addEventListener("change", updateModeSelection);
+  function syncSchemeSelection() {
+    const mode = getSelectedMode();
+    schemeCards.forEach(({ card, radio, badge }) => {
+      const isSel = radio.checked;
+      if (isSel) {
+        card.classList.add("selected");
+        card.setAttribute("aria-checked", "true");
+        badge.hidden = false;
+        badge.style.display = "inline-flex";
+      } else {
+        card.classList.remove("selected");
+        card.setAttribute("aria-checked", "false");
+        badge.hidden = true;
+        badge.style.display = "none";
+      }
+    });
 
-  // Step 4: Preprocessing
+    const isXor = mode === "xor" || mode === "color_xor";
+    overlayShareNote.hidden = isXor;
+    overlayShareNote.style.display = isXor ? "none" : "block";
+    xorSelectGroup.hidden = !isXor;
+    xorSelectGroup.style.display = isXor ? "block" : "none";
+
+    // Halftone step is only applicable for binary overlay
+    const isColorXor = mode === "color_xor";
+    if (prepSelect) prepSelect.disabled = isColorXor;
+  }
+
+  schemeCards.forEach(({ card, radio }) => {
+    card.addEventListener("click", () => {
+      if (!radio.checked) {
+        schemeCards.forEach((c) => { c.radio.checked = false; });
+        radio.checked = true;
+        syncSchemeSelection();
+      }
+    });
+    radio.addEventListener("change", syncSchemeSelection);
+  });
+
+  function updateSchemeAvailability(hasColor) {
+    if (hasColor) {
+      colorToggleRow.style.display = "flex";
+      // Auto-select Colour Overlay
+      scColorOverlay.radio.checked = true;
+    } else {
+      colorToggleRow.style.display = "none";
+      scBwOverlay.radio.checked = true;
+    }
+    syncSchemeSelection();
+  }
+
+  // Handle color preference radio
+  colorToggleRow.querySelectorAll("input").forEach((r) => {
+    r.addEventListener("change", (e) => {
+      if (e.target.value === "bw") {
+        scBwOverlay.radio.checked = true;
+      } else {
+        scColorOverlay.radio.checked = true;
+      }
+      syncSchemeSelection();
+    });
+  });
+
+  // Step 4: Preprocessing (for B/W and Halftone)
   const step4 = document.createElement("div");
   step4.className = "step-item";
   const step4H = document.createElement("div");
@@ -400,7 +613,7 @@ export function init() {
   circle4.appendChild(createIcon("i-check", "icon icon-sm"));
   step4H.appendChild(circle4);
   const step4Title = document.createElement("span");
-  step4Title.textContent = "4 Preprocessing";
+  step4Title.textContent = "4. Preprocessing & Binarization";
   step4H.appendChild(step4Title);
   step4.appendChild(step4H);
 
@@ -408,28 +621,20 @@ export function init() {
   prepSelect.className = "form-select";
   const optHalftone = document.createElement("option");
   optHalftone.value = "halftone";
-  optHalftone.textContent = "Halftone (Floyd-Steinberg)";
+  optHalftone.textContent = "Floyd-Steinberg Error Diffusion (Recommended)";
   const optThreshold = document.createElement("option");
   optThreshold.value = "threshold";
-  optThreshold.textContent = "Fixed threshold";
+  optThreshold.textContent = "Fixed Luminance Threshold";
   prepSelect.appendChild(optHalftone);
   prepSelect.appendChild(optThreshold);
 
   const threshGroup = document.createElement("div");
   threshGroup.className = "form-group";
   threshGroup.hidden = true;
-
-  const threshLabelRow = document.createElement("div");
-  threshLabelRow.className = "stack-controls-row";
+  threshGroup.style.marginTop = "8px";
   const threshLabel = document.createElement("label");
   threshLabel.className = "form-label text-sm";
-  threshLabel.textContent = "Threshold level (0-255)";
-  const threshValSpan = document.createElement("span");
-  threshValSpan.className = "font-mono text-sm";
-  threshValSpan.textContent = "128";
-  threshLabelRow.appendChild(threshLabel);
-  threshLabelRow.appendChild(threshValSpan);
-
+  threshLabel.textContent = "Threshold level (0–255): 128";
   const threshSlider = document.createElement("input");
   threshSlider.type = "range";
   threshSlider.min = "0";
@@ -437,22 +642,13 @@ export function init() {
   threshSlider.value = "128";
   threshSlider.className = "form-range";
   threshSlider.addEventListener("input", () => {
-    threshValSpan.textContent = threshSlider.value;
+    threshLabel.textContent = `Threshold level (0–255): ${threshSlider.value}`;
   });
-
-  threshGroup.appendChild(threshLabelRow);
+  threshGroup.appendChild(threshLabel);
   threshGroup.appendChild(threshSlider);
-
-  const prepTip = document.createElement("p");
-  prepTip.className = "help-text";
-  prepTip.appendChild(createIcon("i-info"));
-  prepTip.appendChild(
-    document.createTextNode(" Tip: choose Fixed threshold for text, logos and certificates; choose Halftone for photos.")
-  );
 
   step4.appendChild(prepSelect);
   step4.appendChild(threshGroup);
-  step4.appendChild(prepTip);
   stepper.appendChild(step4);
 
   prepSelect.addEventListener("change", () => {
@@ -466,7 +662,7 @@ export function init() {
   submitBtn.type = "submit";
   submitBtn.className = "btn btn-primary btn-full";
   submitBtn.appendChild(createIcon("i-shuffle"));
-  submitBtn.appendChild(document.createTextNode(" Generate shares"));
+  submitBtn.appendChild(document.createTextNode(" Split Secret Into Shares"));
   form.appendChild(submitBtn);
 
   const errorSlot = document.createElement("div");
@@ -494,16 +690,35 @@ export function init() {
   emptyState.appendChild(emptyArt);
 
   const emptyH3 = document.createElement("h3");
-  emptyH3.textContent = "Your shares will appear here";
+  emptyH3.textContent = "Your visual shares will appear here";
   emptyState.appendChild(emptyH3);
   const emptyP = document.createElement("p");
   emptyP.className = "help-text";
-  emptyP.textContent = "Upload an image and press Generate shares.";
+  emptyP.textContent = "Select an image and click Split Secret Into Shares, or click Demo Mode.";
   emptyState.appendChild(emptyP);
 
   resultsCol.appendChild(emptyState);
   layout.appendChild(resultsCol);
   panel.appendChild(layout);
+
+  // Wire One-Click Demo Mode button
+  const demoModeBtn = document.getElementById("btn-demo-mode");
+  if (demoModeBtn) {
+    demoModeBtn.addEventListener("click", async () => {
+      setBusy(demoModeBtn, true, "Loading demo…");
+      try {
+        const demoFile = await generateProceduralDemoImage();
+        await handleFile(demoFile);
+        // Trigger submit automatically!
+        submitBtn.click();
+        showToast("Loaded vibrant colourful demonstration secret!", "i-sparkles");
+      } catch (err) {
+        showToast("Failed to initialize demo image.", "i-alert", "error");
+      } finally {
+        setBusy(demoModeBtn, false);
+      }
+    });
+  }
 
   // Form Submission
   form.addEventListener("submit", async (e) => {
@@ -511,12 +726,13 @@ export function init() {
     showError(errorSlot, null);
 
     if (!selectedFile) {
-      showError(errorSlot, "Please choose a file before generating shares.");
+      showError(errorSlot, "Please choose an image file before generating shares.");
       return;
     }
 
-    const mode = radioOverlay.checked ? "overlay" : "xor";
-    const n = mode === "overlay" ? 2 : parseInt(xorSelect.value, 10);
+    const mode = getSelectedMode();
+    const isXor = mode === "xor" || mode === "color_xor";
+    const n = isXor ? parseInt(xorSelect.value, 10) : 2;
     const preprocessing = prepSelect.value;
     const threshold = preprocessing === "threshold" ? parseInt(threshSlider.value, 10) : undefined;
 
@@ -529,16 +745,10 @@ export function init() {
       fd.append("threshold", String(threshold));
     }
 
-    setBusy(submitBtn, true, "Generating…");
+    setBusy(submitBtn, true, "Generating shares…");
     submitBtn.disabled = true;
-    fileInput.disabled = true;
-    radioOverlay.disabled = true;
-    radioXor.disabled = true;
-    xorSelect.disabled = true;
-    prepSelect.disabled = true;
-    threshSlider.disabled = true;
 
-    // Show 3 skeleton cards in results area
+    // Show skeletons
     resultsCol.textContent = "";
     const skelContainer = document.createElement("div");
     skelContainer.className = "skeleton-container";
@@ -553,368 +763,213 @@ export function init() {
       const data = await postForm("/api/generate", fd);
       renderResults(data, mode, n);
     } catch (err) {
+      console.error("Share generation error:", err);
       resultsCol.textContent = "";
       resultsCol.appendChild(emptyState);
-      showError(errorSlot, err.message || "Failed to generate shares.");
+      let friendlyMsg = "Failed to generate visual cryptography shares. Please verify the input image and try again.";
+      if (err && err.message && !err.message.includes("Cannot read properties") && !err.message.includes("undefined") && !err.message.includes("TypeError")) {
+        friendlyMsg = err.message;
+      }
+      showError(errorSlot, friendlyMsg);
     } finally {
       setBusy(submitBtn, false);
       submitBtn.disabled = false;
-      fileInput.disabled = false;
-      radioOverlay.disabled = false;
-      radioXor.disabled = false;
-      xorSelect.disabled = false;
-      prepSelect.disabled = false;
-      threshSlider.disabled = false;
     }
   });
 
   function renderResults(data, mode, n) {
     resultsCol.textContent = "";
     const stamp = getTimestamp();
+    const group = data.group_id || null;
 
     const shareObjects = data.shares.map((s) => {
-      const b64 = s.png_b64 || s.png_base64;
+      const b64 = s.png_b64;
       return {
         index: s.index,
         blob: base64ToBlob(b64),
-        name: getShareFilename(mode, s.index, n, stamp),
+        name: s.filename || getShareFilename(mode, s.index, n, stamp, group),
         b64,
+        width: s.width,
+        height: s.height,
       };
     });
-    const secretB64 = data.secret_png_b64 || data.secret_bw_png_base64;
+
+    const secretB64 = data.secret_png_b64;
     const secretBlob = base64ToBlob(secretB64);
-    const recB64 = data.reconstruction_png_b64 || data.reconstruction_png_base64;
+    const recB64 = data.reconstruction_png_b64;
     const reconstructionBlob = base64ToBlob(recB64);
 
     setLastRun({
       mode,
       n,
       stamp,
+      group,
       shares: shareObjects,
       secretBlob,
       reconstructionBlob,
       metrics: data.metrics,
+      is_color: data.is_color,
+      raw_stack_png_b64: data.raw_stack_png_b64,
+      enhanced_png_b64: data.enhanced_png_b64,
     });
 
-    // Results Header (Section 4.8)
+    // Results Header
     const headerRow = document.createElement("div");
-    headerRow.className = "results-header card";
+    headerRow.className = "results-header-row";
 
-    const topRow = document.createElement("div");
-    topRow.className = "results-header-top";
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "results-title-group";
+    const h2 = document.createElement("h2");
+    h2.textContent = "Generated Shares & Superposition";
+    const subtitle = document.createElement("p");
+    subtitle.className = "help-text";
+    subtitle.textContent = `Generated ${n} shares using ${mode.replace("_", " ")} (${data.metrics.processing_ms} ms)`;
+    titleDiv.appendChild(h2);
+    titleDiv.appendChild(subtitle);
+    headerRow.appendChild(titleDiv);
 
-    const hTitle = document.createElement("h2");
-    hTitle.tabIndex = -1;
-    hTitle.textContent = "Results";
-    topRow.appendChild(hTitle);
+    // Actions: "Download All (ZIP)" & "Send to Reconstruct"
+    const actionBtns = document.createElement("div");
+    actionBtns.style.display = "flex";
+    actionBtns.style.gap = "8px";
 
-    const clearBtn = document.createElement("button");
-    clearBtn.type = "button";
-    clearBtn.className = "btn btn-secondary btn-sm";
-    clearBtn.appendChild(createIcon("i-trash"));
-    clearBtn.appendChild(document.createTextNode(" Clear results"));
-    clearBtn.addEventListener("click", () => {
-      clearRun();
-      resultsCol.textContent = "";
-      resultsCol.appendChild(emptyState);
-      showToast("Results cleared from this page.", "i-trash");
+    const zipBtn = document.createElement("button");
+    zipBtn.type = "button";
+    zipBtn.className = "btn btn-primary btn-sm";
+    zipBtn.appendChild(createIcon("i-download"));
+    zipBtn.appendChild(document.createTextNode(" Download Shares (ZIP)"));
+    zipBtn.addEventListener("click", async () => {
+      try {
+        setBusy(zipBtn, true, "Zipping…");
+        const zipFiles = shareObjects.map((s) => ({ name: s.name, blob: s.blob }));
+        const zipBlob = await createZipBlob(zipFiles);
+        triggerDownload(zipBlob, `vc-${mode}-${group || stamp}-shares.zip`);
+      } catch (err) {
+        showToast("Failed to create ZIP file.", "i-alert", "error");
+      } finally {
+        setBusy(zipBtn, false);
+      }
     });
-    topRow.appendChild(clearBtn);
-    headerRow.appendChild(topRow);
+    actionBtns.appendChild(zipBtn);
 
-    const hNote = document.createElement("p");
-    hNote.className = "help-text";
-    hNote.textContent =
-      "Nothing is stored on the server. Results live only in this browser tab until you clear them or close the page.";
-    headerRow.appendChild(hNote);
+    const sendBtn = document.createElement("button");
+    sendBtn.type = "button";
+    sendBtn.className = "btn btn-secondary btn-sm";
+    sendBtn.appendChild(createIcon("i-link"));
+    sendBtn.appendChild(document.createTextNode(" Send to Reconstruct Tab"));
+    sendBtn.addEventListener("click", () => {
+      const recTab = document.getElementById("tab-reconstruct");
+      if (recTab) {
+        recTab.click();
+        loadSharesFromRun();
+        showToast("Shares transferred to Reconstruct tab.", "i-link");
+      }
+    });
+    actionBtns.appendChild(sendBtn);
 
+    headerRow.appendChild(actionBtns);
     resultsCol.appendChild(headerRow);
 
-    // Results Sub-tabs (Section 4.9)
-    const subtabsNavWrapper = document.createElement("div");
-    subtabsNavWrapper.className = "subtabs-nav-wrapper";
+    // Tabs inside Results (Overview, Individual Shares, Metrics, Superposition Stacking)
+    const subNav = document.createElement("div");
+    subNav.className = "tabs-nav-wrapper";
+    subNav.style.marginTop = "16px";
+    const subTabs = document.createElement("nav");
+    subTabs.className = "tabs-nav";
+    subTabs.setAttribute("role", "tablist");
 
-    const subtabsNav = document.createElement("nav");
-    subtabsNav.className = "subtabs-nav";
-    subtabsNav.setAttribute("role", "tablist");
-    subtabsNav.setAttribute("aria-label", "Results sub-tabs");
+    const tOverview = el("button", { id: "rtab-overview", className: "tab-btn", role: "tab", "aria-selected": "true" }, [createIcon("i-image"), " Overview"]);
+    const tShares = el("button", { id: "rtab-shares", className: "tab-btn", role: "tab", "aria-selected": "false" }, [createIcon("i-layers"), ` Shares (${n})`]);
+    const tStack = el("button", { id: "rtab-stack", className: "tab-btn", role: "tab", "aria-selected": "false" }, [createIcon("i-shuffle"), " Live Superposition"]);
+    const tMetrics = el("button", { id: "rtab-metrics", className: "tab-btn", role: "tab", "aria-selected": "false" }, [createIcon("i-sliders"), " Cryptographic Metrics"]);
 
-    const tabsDef = [
-      { id: "rtab-overview", panelId: "rpanel-overview", label: "Overview", icon: "i-image" },
-      { id: "rtab-shares", panelId: "rpanel-shares", label: "Shares", icon: "i-layers" },
-      { id: "rtab-metrics", panelId: "rpanel-metrics", label: "Metrics", icon: "i-sliders" },
-      { id: "rtab-stack", panelId: "rpanel-stack", label: "Stack demo", icon: "i-eye" },
+    subTabs.appendChild(tOverview);
+    subTabs.appendChild(tShares);
+    subTabs.appendChild(tStack);
+    subTabs.appendChild(tMetrics);
+    subNav.appendChild(subTabs);
+    resultsCol.appendChild(subNav);
+
+    // Panel 1: Overview (Secret, Superposition result)
+    const pOverview = el("div", { id: "rpanel-overview", className: "tab-panel", role: "tabpanel" });
+    const gridOverview = el("div", { className: "results-grid-2col" });
+
+    const fSecret = createImageFrame(
+      `data:image/png;base64,${secretB64}`,
+      "Secret Image (Input)",
+      `${data.metrics.secret_size.width} × ${data.metrics.secret_size.height} px`,
+      secretBlob,
+      `secret_${stamp}.png`
+    );
+    const fReconstruction = createImageFrame(
+      `data:image/png;base64,${recB64}`,
+      data.is_color ? "Reconstructed Colour Result" : "Reconstructed Result",
+      `${data.metrics.secret_size.width} × ${data.metrics.secret_size.height} px`,
+      reconstructionBlob,
+      `reconstruction_${mode}_${stamp}.png`
+    );
+    fReconstruction.frame.classList.add("reveal-animated");
+
+    gridOverview.appendChild(fSecret.frame);
+    gridOverview.appendChild(fReconstruction.frame);
+    pOverview.appendChild(gridOverview);
+
+    // Download bar
+    renderDownloadBar(reconstructionBlob, mode, pOverview, true);
+    resultsCol.appendChild(pOverview);
+
+    // Panel 2: Shares
+    const pShares = el("div", { id: "rpanel-shares", className: "tab-panel", role: "tabpanel", hidden: true });
+    const gridShares = el("div", { className: "results-grid-cards" });
+
+    shareObjects.forEach((s) => {
+      const frame = createImageFrame(
+        `data:image/png;base64,${s.b64}`,
+        `Share ${s.index} of ${n}`,
+        `${s.width} × ${s.height} px · Lossless PNG`,
+        s.blob,
+        s.name
+      );
+      gridShares.appendChild(frame.frame);
+    });
+    pShares.appendChild(gridShares);
+    resultsCol.appendChild(pShares);
+
+    // Panel 3: Live Superposition Stacking Demo
+    const pStack = el("div", { id: "rpanel-stack", className: "tab-panel", role: "tabpanel", hidden: true });
+    if (shareObjects.length >= 2) {
+      const stackDemo = renderStackingDemo(shareObjects[0].b64, shareObjects[1].b64);
+      pStack.appendChild(stackDemo);
+    } else {
+      pStack.appendChild(el("p", { className: "help-text" }, "Requires at least 2 shares for optical superposition."));
+    }
+    resultsCol.appendChild(pStack);
+
+    // Panel 4: Metrics
+    const pMetrics = el("div", { id: "rpanel-metrics", className: "tab-panel", role: "tabpanel", hidden: true });
+    renderMetricsPanel(data.metrics, pMetrics);
+    resultsCol.appendChild(pMetrics);
+
+    // Sub-tabs switching logic
+    const subPanels = [
+      { tab: tOverview, panel: pOverview },
+      { tab: tShares, panel: pShares },
+      { tab: tStack, panel: pStack },
+      { tab: tMetrics, panel: pMetrics },
     ];
 
-    const tabButtons = [];
-    const panelElements = [];
-
-    // Panels container
-    const panelsWrap = document.createElement("div");
-
-    tabsDef.forEach((td, idx) => {
-      const btn = document.createElement("button");
-      btn.id = td.id;
-      btn.setAttribute("role", "tab");
-      btn.setAttribute("aria-controls", td.panelId);
-      btn.setAttribute("aria-selected", idx === 0 ? "true" : "false");
-      btn.className = "subtab-btn";
-      btn.tabIndex = idx === 0 ? 0 : -1;
-      btn.appendChild(createIcon(td.icon));
-      btn.appendChild(document.createTextNode(` ${td.label}`));
-      subtabsNav.appendChild(btn);
-      tabButtons.push(btn);
-
-      const pnl = document.createElement("div");
-      pnl.id = td.panelId;
-      pnl.setAttribute("role", "tabpanel");
-      pnl.setAttribute("aria-labelledby", td.id);
-      pnl.className = "subtab-panel";
-      pnl.hidden = idx !== 0;
-      panelsWrap.appendChild(pnl);
-      panelElements.push(pnl);
-    });
-
-    subtabsNavWrapper.appendChild(subtabsNav);
-    resultsCol.appendChild(subtabsNavWrapper);
-    resultsCol.appendChild(panelsWrap);
-
-    // Sub-tab switching
-    tabButtons.forEach((btn, idx) => {
-      btn.addEventListener("click", () => {
-        tabButtons.forEach((b, i) => {
-          const isActive = i === idx;
-          b.setAttribute("aria-selected", isActive ? "true" : "false");
-          b.tabIndex = isActive ? 0 : -1;
-          panelElements[i].hidden = !isActive;
+    subPanels.forEach(({ tab, panel: p }) => {
+      tab.addEventListener("click", () => {
+        subPanels.forEach((item) => {
+          const isAct = item.tab === tab;
+          item.tab.setAttribute("aria-selected", String(isAct));
+          item.panel.hidden = !isAct;
         });
       });
     });
 
-    // Populate Overview panel (Section 4.10)
-    const pnlOverview = panelElements[0];
-    const recSrc = `data:image/png;base64,${recB64}`;
-    const sh1Src = `data:image/png;base64,${shareObjects[0].b64}`;
-
-    // Reveal Slider
-    const slider = createRevealSlider(recSrc, sh1Src);
-    pnlOverview.appendChild(slider);
-
-    // Two cards side by side
-    const cardsRow = document.createElement("div");
-    cardsRow.className = "overview-cards-grid";
-
-    // Secret card
-    const secCard = document.createElement("div");
-    secCard.className = "card";
-    const secTitle = document.createElement("h3");
-    secTitle.className = "card-title";
-    secTitle.textContent = "Secret (black-and-white)";
-    const secSize = document.createElement("p");
-    secSize.className = "help-text font-mono";
-    secSize.textContent = `${data.metrics.secret_size.width} × ${data.metrics.secret_size.height} px`;
-    const secFrame = createImageFrame(`data:image/png;base64,${secretB64}`, "Secret (black-and-white)");
-    secCard.appendChild(secTitle);
-    secCard.appendChild(secSize);
-    secCard.appendChild(secFrame.frame);
-    cardsRow.appendChild(secCard);
-
-    // Reconstruction card
-    const recCard = document.createElement("div");
-    recCard.className = "card";
-    const recTitle = document.createElement("h3");
-    recTitle.className = "card-title";
-    recTitle.textContent = "Reconstruction (all shares combined)";
-    const recSize = document.createElement("p");
-    recSize.className = "help-text font-mono";
-    recSize.textContent = `${data.metrics.share_size.width} × ${data.metrics.share_size.height} px`;
-    const recFrame = createImageFrame(recSrc, "Reconstruction");
-    recCard.appendChild(recTitle);
-    recCard.appendChild(recSize);
-    recCard.appendChild(recFrame.frame);
-    renderDownloadBar(reconstructionBlob, mode, recCard, true);
-    cardsRow.appendChild(recCard);
-
-    pnlOverview.appendChild(cardsRow);
-
-    // Populate Shares panel (Section 4.11)
-    const pnlShares = panelElements[1];
-    const sharesGrid = document.createElement("div");
-    sharesGrid.className = "shares-grid";
-
-    const shareCheckboxes = [];
-
-    shareObjects.forEach((sh) => {
-      const shCard = document.createElement("div");
-      shCard.className = "card";
-
-      const topRow = document.createElement("div");
-      topRow.className = "stack-controls-row";
-
-      const cbLabel = document.createElement("label");
-      cbLabel.className = "form-label text-sm";
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = true;
-      cb.value = String(sh.index);
-      cbLabel.appendChild(cb);
-      cbLabel.appendChild(document.createTextNode(` Share ${sh.index} of ${n}`));
-      topRow.appendChild(cbLabel);
-
-      shCard.appendChild(topRow);
-      shareCheckboxes.push(cb);
-
-      const shSrc = `data:image/png;base64,${sh.b64}`;
-      const frameObj = createImageFrame(shSrc, `Share ${sh.index} of ${n}`);
-      shCard.appendChild(frameObj.frame);
-
-      const sizeP = document.createElement("p");
-      sizeP.className = "help-text font-mono";
-      sizeP.textContent = `${data.metrics.share_size.width} × ${data.metrics.share_size.height} px`;
-      shCard.appendChild(sizeP);
-
-      const noteP = document.createElement("p");
-      noteP.className = "help-text";
-      noteP.textContent = "Looks flat grey because it is random noise. One share alone reveals nothing.";
-      shCard.appendChild(noteP);
-
-      const btnRow = document.createElement("div");
-      btnRow.className = "download-btn-row";
-
-      const inspectBtn = document.createElement("button");
-      inspectBtn.type = "button";
-      inspectBtn.className = "btn btn-secondary btn-sm";
-      inspectBtn.appendChild(createIcon("i-zoom"));
-      inspectBtn.appendChild(document.createTextNode(" Inspect at 1:1"));
-      inspectBtn.addEventListener("click", () => {
-        openInspector(shSrc, `Share ${sh.index} of ${n}`, inspectBtn);
-      });
-      btnRow.appendChild(inspectBtn);
-
-      const dlBtn = document.createElement("button");
-      dlBtn.type = "button";
-      dlBtn.className = "btn btn-secondary btn-sm";
-      dlBtn.appendChild(createIcon("i-download"));
-      dlBtn.appendChild(document.createTextNode(" Download PNG"));
-      dlBtn.addEventListener("click", () => {
-        triggerDownload(sh.blob, sh.name);
-      });
-      btnRow.appendChild(dlBtn);
-
-      shCard.appendChild(btnRow);
-      sharesGrid.appendChild(shCard);
-    });
-
-    pnlShares.appendChild(sharesGrid);
-
-    // Below grid buttons
-    const actionsRow = document.createElement("div");
-    actionsRow.className = "download-btn-row";
-    actionsRow.style.marginTop = "16px";
-
-    const combineBtn = document.createElement("button");
-    combineBtn.type = "button";
-    combineBtn.className = "btn btn-primary";
-    combineBtn.appendChild(createIcon("i-shuffle"));
-    combineBtn.appendChild(document.createTextNode(" Combine selected shares"));
-
-    const openRecBtn = document.createElement("button");
-    openRecBtn.type = "button";
-    openRecBtn.className = "btn btn-secondary";
-    openRecBtn.appendChild(createIcon("i-link"));
-    openRecBtn.appendChild(document.createTextNode(" Open in Reconstruct"));
-    openRecBtn.addEventListener("click", () => {
-      loadSharesFromRun();
-      window.location.hash = "#reconstruct";
-    });
-
-    actionsRow.appendChild(combineBtn);
-    actionsRow.appendChild(openRecBtn);
-    pnlShares.appendChild(actionsRow);
-
-    const combineResultSlot = document.createElement("div");
-    pnlShares.appendChild(combineResultSlot);
-
-    combineBtn.addEventListener("click", async () => {
-      combineResultSlot.textContent = "";
-      const selectedIndices = shareCheckboxes.filter((c) => c.checked).map((c) => parseInt(c.value, 10));
-
-      if (selectedIndices.length === 0) {
-        showToast("Please select at least one share.", "i-alert", "warn");
-        return;
-      }
-
-      setBusy(combineBtn, true, "Combining…");
-      try {
-        const cfd = new FormData();
-        cfd.append("mode", mode);
-        cfd.append("n", String(n));
-        cfd.append("n_total", String(n));
-        selectedIndices.forEach((idx) => {
-          const sh = shareObjects.find((s) => s.index === idx);
-          if (sh) {
-            cfd.append("shares", sh.blob, sh.name);
-          }
-        });
-
-        const res = await postForm("/api/reconstruct", cfd);
-
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.marginTop = "16px";
-
-        const msgBox = document.createElement("div");
-        msgBox.className = `alert alert-${res.sufficient ? "info" : "warn"}`;
-        msgBox.appendChild(createIcon("i-alert"));
-        const msgText = document.createElement("span");
-        msgText.textContent = res.message;
-        msgBox.appendChild(msgText);
-        card.appendChild(msgBox);
-
-        if (!res.sufficient) {
-          const extraP = document.createElement("p");
-          extraP.className = "help-text";
-          extraP.textContent = "A result built from too few shares shows no recognisable secret (FR-7).";
-          card.appendChild(extraP);
-        }
-
-        const combB64 = res.reconstruction_png_b64 || res.reconstruction_png_base64;
-        const resFrame = createImageFrame(`data:image/png;base64,${combB64}`, "Combined shares");
-        card.appendChild(resFrame.frame);
-
-        const resBlob = base64ToBlob(combB64);
-        renderDownloadBar(resBlob, mode, card, res.sufficient);
-
-        combineResultSlot.appendChild(card);
-      } catch (err) {
-        showToast(err.message || "Failed to combine shares.", "i-alert", "error");
-      } finally {
-        setBusy(combineBtn, false);
-      }
-    });
-
-    // Populate Metrics panel (Section 4.12)
-    const pnlMetrics = panelElements[2];
-    pnlMetrics.appendChild(renderMetricsPanel(data.metrics));
-
-    // Populate Stack demo panel (Section 4.12)
-    const pnlStack = panelElements[3];
-    if (mode === "overlay") {
-      const s1B64 = shareObjects[0].b64;
-      const s2B64 = shareObjects[1] ? shareObjects[1].b64 : "";
-      pnlStack.appendChild(renderStackingDemo(s1B64, s2B64));
-    } else {
-      const xorNotice = document.createElement("div");
-      xorNotice.className = "alert alert-info";
-      xorNotice.appendChild(createIcon("i-info"));
-      const span = document.createElement("span");
-      span.textContent = "Stacking by hand applies to Overlay mode. XOR shares are combined by computation, not by overlaying.";
-      xorNotice.appendChild(span);
-      pnlStack.appendChild(xorNotice);
-    }
-
-    // Smooth scroll and focus (Section 4.7)
-    headerRow.scrollIntoView({ behavior: "smooth", block: "start" });
-    hTitle.focus();
+    resultsCol.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  syncSchemeSelection();
 }

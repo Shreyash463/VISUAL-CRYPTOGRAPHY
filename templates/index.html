@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visual Cryptography · SSPU Progress Review II</title>
+  <title>VeilShare · Visual Cryptography Studio | SSPU Final Review</title>
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
-  <link rel="stylesheet" href="/static/css/tokens.css">
-  <link rel="stylesheet" href="/static/css/base.css">
-  <link rel="stylesheet" href="/static/css/layout.css">
-  <link rel="stylesheet" href="/static/css/components.css">
-  <script type="module" src="/static/js/main.js"></script>
+  <link rel="stylesheet" href="/static/css/fonts.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/tokens.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/base.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/layout.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/components.css?v=2.1.0">
+  <script type="module" src="/static/js/main.js?v=2.1.0"></script>
 </head>
 <body>
   <svg hidden class="svg-sprite">
@@ -108,19 +109,31 @@
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
     </symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4z"></path>
+    </symbol>
   </svg>
 
   <header id="site-header">
     <div class="header-container">
       <div class="header-left">
-        <div id="logo-slot"></div>
+        <a href="/" class="header-logo-link" title="Back to Landing Page">
+          <div id="logo-slot">
+            <img src="/static/img/sspu-logo.png" alt="SSPU Logo" class="brand-logo">
+          </div>
+        </a>
         <div class="header-titles">
-          <h1>Visual Cryptography</h1>
-          <p class="subtitle">Progress Review II · Design &amp; Implementation Review</p>
+          <h1>VeilShare Studio</h1>
+          <p class="subtitle">Final Review</p>
         </div>
       </div>
       <div class="header-right">
-        <span class="review-chip">10 Oct 2026</span>
+        <a href="/" class="nav-link text-sm header-landing-link">&larr; Landing Page</a>
+        <button id="btn-demo-mode" class="btn btn-secondary btn-sm" type="button" title="Load procedural colorful sample and run split + reveal">
+          <svg class="icon" aria-hidden="true"><use href="#i-sparkles"></use></svg>
+          <span>Demo Mode</span>
+        </button>
+        <span class="review-chip">Final Review</span>
         <button id="theme-toggle" class="btn-icon-only" type="button" aria-label="Switch colour theme">
           <svg class="icon" aria-hidden="true"><use href="#i-moon"></use></svg>
         </button>
@@ -183,6 +196,11 @@
 
   <dialog id="inspector-dialog"></dialog>
 
-  <footer id="site-footer">Visual Cryptography | Progress Review II | SSPU | 10 October 2026</footer>
+  <footer id="site-footer">
+    <div class="footer-wrap">
+      <img src="/static/img/sspu-logo.png" alt="SSPU Logo" class="footer-sspu-logo">
+      <span>Visual Cryptography | SSPU Final Review</span>
+    </div>
+  </footer>
 </body>
 </html>

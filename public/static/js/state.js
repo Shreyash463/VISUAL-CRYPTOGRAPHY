@@ -23,6 +23,9 @@ export function revokeAllUrls() {
 
 export function setLastRun(data) {
   lastRun = data;
+  try {
+    window.dispatchEvent(new CustomEvent("vc:run-updated", { detail: data }));
+  } catch (_) {}
 }
 
 export function getLastRun() {

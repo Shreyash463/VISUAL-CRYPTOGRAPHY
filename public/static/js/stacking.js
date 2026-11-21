@@ -1,5 +1,6 @@
 /**
- * Stacking demo component for overlay mode (Naor & Shamir 1994).
+ * Stacking demo component for overlay mode (Naor & Shamir 1994, Hou 2003).
+ * Provides interactive draggable transparency with mix-blend-mode: multiply and magnetic snap.
  */
 import { el, createIcon } from "./ui.js";
 import { checkPixelation } from "./viewer.js";
@@ -7,10 +8,10 @@ import { checkPixelation } from "./viewer.js";
 export function renderStackingDemo(share1B64, share2B64) {
   const container = el("div", { className: "card stacking-card" });
 
-  const title = el("h3", { className: "card-title" }, "Stack the shares yourself");
+  const title = el("h3", { className: "card-title" }, "Optical Transparency Superposition");
 
-  let offsetX = 37;
-  let offsetY = 23;
+  let offsetX = 32;
+  let offsetY = 18;
 
   const readout = el(
     "div",
@@ -21,12 +22,18 @@ export function renderStackingDemo(share1B64, share2B64) {
   const alignBtn = el(
     "button",
     { type: "button", className: "btn btn-secondary btn-sm" },
-    [createIcon("i-shuffle"), " Align shares"]
+    [createIcon("i-shuffle"), " Snap to Align"]
+  );
+
+  const jitterBtn = el(
+    "button",
+    { type: "button", className: "btn btn-secondary btn-sm" },
+    [createIcon("i-sliders"), " Jitter Offset"]
   );
 
   const controlsRow = el("div", { className: "stack-controls-row" }, [
     readout,
-    alignBtn,
+    el("div", { style: "display: flex; gap: 8px;" }, [jitterBtn, alignBtn]),
   ]);
 
   const stage = el("div", { className: "stacking-stage" });
@@ -40,11 +47,11 @@ export function renderStackingDemo(share1B64, share2B64) {
   const topImg = el("img", {
     className: "stack-top-img pixelated",
     src: `data:image/png;base64,${share2B64}`,
-    alt: "Share 2 (drag or focus and use arrow keys to align)",
+    alt: "Share 2 (drag or use arrow keys to align)",
     tabindex: "0",
   });
 
-  topImg.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  topImg.style.mixBlendMode = "multiply";
   checkPixelation(baseImg);
   checkPixelation(topImg);
 
@@ -52,10 +59,23 @@ export function renderStackingDemo(share1B64, share2B64) {
   stage.appendChild(topImg);
 
   function updateTransform() {
-    topImg.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-    const signX = offsetX > 0 ? "+" : "";
-    const signY = offsetY > 0 ? "+" : "";
-    readout.textContent = `Offset: x = ${signX}${offsetX} px, y = ${signY}${offsetY} px`;
+    let snapX = offsetX;
+    let snapY = offsetY;
+    const isSnapped = Math.abs(offsetX) <= 3 && Math.abs(offsetY) <= 3;
+    if (isSnapped) {
+      snapX = 0;
+      snapY = 0;
+    }
+    topImg.style.transform = `translate(${snapX}px, ${snapY}px)`;
+    if (isSnapped) {
+      readout.textContent = "Offset: x = 0 px, y = 0 px (Magnetic Snap — Perfect Alignment!)";
+      readout.style.color = "var(--success)";
+    } else {
+      const signX = offsetX > 0 ? "+" : "";
+      const signY = offsetY > 0 ? "+" : "";
+      readout.textContent = `Offset: x = ${signX}${offsetX} px, y = ${signY}${offsetY} px`;
+      readout.style.color = "var(--muted)";
+    }
   }
 
   // Pointer drag events
@@ -129,10 +149,25 @@ export function renderStackingDemo(share1B64, share2B64) {
     updateTransform();
   });
 
+  let jitterSeed = 123456789;
+  function pseudoRandom() {
+    jitterSeed = (jitterSeed * 1664525 + 1013904223) % 4294967296;
+    return jitterSeed / 4294967296;
+  }
+
+  jitterBtn.addEventListener("click", () => {
+    offsetX = Math.floor(pseudoRandom() * 60) - 30;
+    offsetY = Math.floor(pseudoRandom() * 40) - 20;
+    if (Math.abs(offsetX) <= 3) offsetX = 15;
+    updateTransform();
+  });
+
+  updateTransform();
+
   const caption = el(
     "p",
     { className: "help-text" },
-    "Shares printed on transparencies must align pixel by pixel (C-5). At offset 0, 0 the secret appears."
+    "Simulates physical transparency superposition using CSS multiply blend. When aligned (offset 0, 0), the secret appears with optical fidelity (C-5)."
   );
 
   container.appendChild(title);

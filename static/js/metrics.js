@@ -77,65 +77,95 @@ export function renderMetricsPanel(metrics) {
   expCard.appendChild(expCaption);
   grid.appendChild(expCard);
 
-  // 3. Contrast card
+  // 3. Contrast or Colour Fidelity card
   const conCard = document.createElement("div");
   conCard.className = "metric-card card";
   const conTitle = document.createElement("h4");
   conTitle.className = "metric-card-title";
-  conTitle.textContent = "Contrast (Relative Difference)";
 
-  if (metrics.contrast.relative_difference === null) {
-    const conNull = document.createElement("p");
-    conNull.className = "help-text";
-    conNull.textContent = "not defined (secret has only one colour)";
-    conCard.appendChild(conTitle);
-    conCard.appendChild(conNull);
+  if (metrics.contrast) {
+    conTitle.textContent = "Contrast (Relative Difference)";
+    if (metrics.contrast.relative_difference === null) {
+      const conNull = document.createElement("p");
+      conNull.className = "help-text";
+      conNull.textContent = "not defined (secret has only one colour)";
+      conCard.appendChild(conTitle);
+      conCard.appendChild(conNull);
+    } else {
+      const measuredVal = formatNumber(metrics.contrast.relative_difference, 3);
+      const theoVal = formatNumber(metrics.contrast.theoretical, 3);
+
+      const conValRow = document.createElement("div");
+      conValRow.className = "metric-val-row";
+
+      const conMono = document.createElement("span");
+      conMono.className = "font-mono";
+      conMono.textContent = `${measuredVal} (theoretical ${theoVal}) `;
+      conValRow.appendChild(conMono);
+
+      const matchBadge = metrics.contrast.matches_theory
+        ? createBadge("matches theory", "success", "i-check")
+        : createBadge("differs", "warn", "i-x");
+      conValRow.appendChild(matchBadge);
+
+      const track = document.createElement("div");
+      track.className = "metric-bar-track metric-contrast-track";
+
+      const fill = document.createElement("div");
+      fill.className = "metric-bar-fill";
+      const fillPct = Math.min(100, Math.max(0, metrics.contrast.relative_difference * 100));
+      fill.style.width = `${fillPct}%`;
+      track.appendChild(fill);
+
+      const marker = document.createElement("div");
+      marker.className = "metric-marker";
+      const theoPct = Math.min(100, Math.max(0, metrics.contrast.theoretical * 100));
+      marker.style.left = `${theoPct}%`;
+      marker.setAttribute("title", `Theoretical: ${theoVal}`);
+      track.appendChild(marker);
+
+      const conLabels = document.createElement("div");
+      conLabels.className = "metric-track-labels";
+      const lbl0 = document.createElement("span");
+      lbl0.textContent = "0.0";
+      const lbl1 = document.createElement("span");
+      lbl1.textContent = "1.0";
+      conLabels.appendChild(lbl0);
+      conLabels.appendChild(lbl1);
+
+      conCard.appendChild(conTitle);
+      conCard.appendChild(conValRow);
+      conCard.appendChild(track);
+      conCard.appendChild(conLabels);
+    }
   } else {
-    const measuredVal = formatNumber(metrics.contrast.relative_difference, 3);
-    const theoVal = formatNumber(metrics.contrast.theoretical, 3);
-
-    const conValRow = document.createElement("div");
-    conValRow.className = "metric-val-row";
-
-    const conMono = document.createElement("span");
-    conMono.className = "font-mono";
-    conMono.textContent = `${measuredVal} (theoretical ${theoVal}) `;
-    conValRow.appendChild(conMono);
-
-    const matchBadge = metrics.contrast.matches_theory
-      ? createBadge("matches theory", "success", "i-check")
-      : createBadge("differs", "warn", "i-x");
-    conValRow.appendChild(matchBadge);
-
-    const track = document.createElement("div");
-    track.className = "metric-bar-track metric-contrast-track";
-
-    const fill = document.createElement("div");
-    fill.className = "metric-bar-fill";
-    const fillPct = Math.min(100, Math.max(0, metrics.contrast.relative_difference * 100));
-    fill.style.width = `${fillPct}%`;
-    track.appendChild(fill);
-
-    const marker = document.createElement("div");
-    marker.className = "metric-marker";
-    const theoPct = Math.min(100, Math.max(0, metrics.contrast.theoretical * 100));
-    marker.style.left = `${theoPct}%`;
-    marker.setAttribute("title", `Theoretical: ${theoVal}`);
-    track.appendChild(marker);
-
-    const conLabels = document.createElement("div");
-    conLabels.className = "metric-track-labels";
-    const lbl0 = document.createElement("span");
-    lbl0.textContent = "0.0";
-    const lbl1 = document.createElement("span");
-    lbl1.textContent = "1.0";
-    conLabels.appendChild(lbl0);
-    conLabels.appendChild(lbl1);
-
+    // Colour Scheme Quality Card (PSNR / Color Fidelity)
+    conTitle.textContent = "Colour Fidelity & Reconstruction";
     conCard.appendChild(conTitle);
-    conCard.appendChild(conValRow);
-    conCard.appendChild(track);
-    conCard.appendChild(conLabels);
+
+    const valRow = document.createElement("div");
+    valRow.className = "metric-val-row";
+
+    const psnrMono = document.createElement("span");
+    psnrMono.className = "font-mono";
+    psnrMono.textContent = metrics.exact_match
+      ? "Lossless Exact (PSNR \u221E)"
+      : `PSNR: ${formatNumber(metrics.psnr, 1)} dB · Error \u0394E: ${formatNumber(metrics.mean_color_error, 1)}`;
+    valRow.appendChild(psnrMono);
+
+    const fidelityBadge = metrics.exact_match
+      ? createBadge("Lossless Exact", "success", "i-check")
+      : createBadge("CMY Halftone", "accent", "i-sparkles");
+    valRow.appendChild(fidelityBadge);
+
+    const helpP = document.createElement("p");
+    helpP.className = "help-text";
+    helpP.textContent = metrics.exact_match
+      ? "Bitwise modular XOR provides mathematical zero-loss RGB reconstruction."
+      : "Hou (2003) CMY halftoning preserves chromaticity via subpixel min-stacking.";
+
+    conCard.appendChild(valRow);
+    conCard.appendChild(helpP);
   }
   grid.appendChild(conCard);
 
@@ -218,12 +248,12 @@ export function renderMetricsPanel(metrics) {
 
     const tdBlack = document.createElement("td");
     tdBlack.className = "font-mono";
-    tdBlack.textContent = sh.p_black_in_secret_black !== null ? formatNumber(sh.p_black_in_secret_black, 4) : "—";
+    tdBlack.textContent = sh.p_black_in_secret_black != null ? formatNumber(sh.p_black_in_secret_black, 4) : "—";
     tr.appendChild(tdBlack);
 
     const tdWhite = document.createElement("td");
     tdWhite.className = "font-mono";
-    tdWhite.textContent = sh.p_black_in_secret_white !== null ? formatNumber(sh.p_black_in_secret_white, 4) : "—";
+    tdWhite.textContent = sh.p_black_in_secret_white != null ? formatNumber(sh.p_black_in_secret_white, 4) : "—";
     tr.appendChild(tdWhite);
 
     const tdDev = document.createElement("td");

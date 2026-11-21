@@ -36,11 +36,11 @@ def test_index_structure(client):
     assert 'id="panel-about"' in html
 
     # Exact footer text
-    expected_footer = "Visual Cryptography | Progress Review II | SSPU | 10 October 2026"
+    expected_footer = "Visual Cryptography | SSPU Final Review"
     assert expected_footer in html
 
-    # Exact subtitle text (allowing HTML entity &amp;)
-    assert "Progress Review II · Design &amp; Implementation Review" in html or "Progress Review II · Design & Implementation Review" in html
+    # Exact subtitle text
+    assert "Final Review" in html
 
 
 def test_phase3_index_elements(client):

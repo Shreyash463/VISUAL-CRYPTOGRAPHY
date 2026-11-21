@@ -1,5 +1,5 @@
 /**
- * Reconstruction download module with viewing copy generator (Section 5).
+ * Reconstruction download module with viewing copy generator and ZIP share packager.
  */
 import { showToast } from "./toast.js";
 
@@ -9,7 +9,10 @@ export function getTimestamp() {
   return `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
-export function getShareFilename(mode, i, n, stamp) {
+export function getShareFilename(mode, i, n, stamp, group = null) {
+  if (group) {
+    return `vc-${mode}-${group}-share${i}-of-${n}.png`;
+  }
   return `share_${mode}_${i}_of_${n}_${stamp}.png`;
 }
 
@@ -32,6 +35,107 @@ export function triggerDownload(blob, filename) {
     } catch (_) {}
   }, 1000);
   showToast(`Downloaded ${filename}`, "i-download");
+}
+
+// Pure JS CRC32 implementation
+function makeCrcTable() {
+  let c;
+  const table = [];
+  for (let n = 0; n < 256; n++) {
+    c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c;
+  }
+  return table;
+}
+const crcTable = makeCrcTable();
+
+function computeCrc32(uint8arr) {
+  let crc = 0 ^ (-1);
+  for (let i = 0; i < uint8arr.length; i++) {
+    crc = (crc >>> 8) ^ crcTable[(crc ^ uint8arr[i]) & 0xFF];
+  }
+  return (crc ^ (-1)) >>> 0;
+}
+
+/**
+ * Create an uncompressed (Store) ZIP Blob from a list of { name: string, blob: Blob }.
+ */
+export async function createZipBlob(files) {
+  const fileDataList = [];
+  for (const f of files) {
+    const arrayBuffer = await f.blob.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    const enc = new TextEncoder();
+    const nameBytes = enc.encode(f.name);
+    const crc = computeCrc32(data);
+    fileDataList.push({ nameBytes, data, crc, size: data.length });
+  }
+
+  const parts = [];
+  const entries = [];
+  let offset = 0;
+
+  for (const item of fileDataList) {
+    const local = new Uint8Array(30 + item.nameBytes.length);
+    const view = new DataView(local.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 0, true);
+    view.setUint16(8, 0, true); // Store
+    view.setUint32(10, 0, true); // time/date
+    view.setUint32(14, item.crc, true);
+    view.setUint32(18, item.size, true);
+    view.setUint32(22, item.size, true);
+    view.setUint16(26, item.nameBytes.length, true);
+    view.setUint16(28, 0, true);
+    local.set(item.nameBytes, 30);
+
+    parts.push(local, item.data);
+    entries.push({ nameBytes: item.nameBytes, size: item.size, crc: item.crc, offset });
+    offset += local.length + item.size;
+  }
+
+  const cdOffset = offset;
+  let cdSize = 0;
+
+  for (const entry of entries) {
+    const cd = new Uint8Array(46 + entry.nameBytes.length);
+    const view = new DataView(cd.buffer);
+    view.setUint32(0, 0x02014b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 20, true);
+    view.setUint16(8, 0, true);
+    view.setUint16(10, 0, true);
+    view.setUint32(12, 0, true);
+    view.setUint32(16, entry.crc, true);
+    view.setUint32(20, entry.size, true);
+    view.setUint32(24, entry.size, true);
+    view.setUint16(28, entry.nameBytes.length, true);
+    view.setUint16(30, 0, true);
+    view.setUint16(32, 0, true);
+    view.setUint16(34, 0, true);
+    view.setUint32(36, 0, true);
+    view.setUint32(42, entry.offset, true);
+    cd.set(entry.nameBytes, 46);
+
+    parts.push(cd);
+    cdSize += cd.length;
+  }
+
+  const eocd = new Uint8Array(22);
+  const view = new DataView(eocd.buffer);
+  view.setUint32(0, 0x06054b50, true);
+  view.setUint16(4, 0, true);
+  view.setUint16(6, 0, true);
+  view.setUint16(8, entries.length, true);
+  view.setUint16(10, entries.length, true);
+  view.setUint32(12, cdSize, true);
+  view.setUint32(16, cdOffset, true);
+  view.setUint16(20, 0, true);
+
+  parts.push(eocd);
+  return new Blob(parts, { type: "application/zip" });
 }
 
 export function makeViewingCopy(pngBlob) {
@@ -127,7 +231,9 @@ export function renderDownloadBar(blob, mode, containerEl, sufficient = true) {
   const btnRow = document.createElement("div");
   btnRow.className = "download-btn-row";
 
-  if (mode === "overlay") {
+  const isOverlay = mode === "overlay" || mode === "color_overlay";
+
+  if (isOverlay) {
     const btnStacked = document.createElement("button");
     btnStacked.type = "button";
     btnStacked.className = "btn btn-primary";
@@ -143,14 +249,14 @@ export function renderDownloadBar(blob, mode, containerEl, sufficient = true) {
     if (sufficient) {
       btnStacked.addEventListener("click", () => {
         const stamp = getTimestamp();
-        triggerDownload(blob, `reconstruction_overlay_${stamp}.png`);
+        triggerDownload(blob, `reconstruction_${mode}_${stamp}.png`);
       });
 
       btnViewing.addEventListener("click", async () => {
         try {
           const viewingBlob = await makeViewingCopy(blob);
           const stamp = getTimestamp();
-          triggerDownload(viewingBlob, `reconstruction_overlay_viewing_${stamp}.png`);
+          triggerDownload(viewingBlob, `reconstruction_${mode}_viewing_${stamp}.png`);
         } catch (err) {
           showToast(err.message || "Failed to generate viewing copy.", "i-alert", "error");
         }
@@ -169,7 +275,7 @@ export function renderDownloadBar(blob, mode, containerEl, sufficient = true) {
     const helpP = document.createElement("p");
     helpP.className = "help-text";
     helpP.textContent =
-      "The stacked file is the faithful result of overlaying the shares. The viewing copy is made in your browser: each 2×2 block is averaged to one pixel and contrast is doubled for easier reading. It is a display convenience; contrast loss is still reported in the metrics (C-1).";
+      "The reconstructed file represents the combined secret. Lossless PNG format ensures subpixels and colour channels remain intact without JPEG compression artifacts.";
     bar.appendChild(helpP);
   } else {
     const btnXor = document.createElement("button");
@@ -181,7 +287,7 @@ export function renderDownloadBar(blob, mode, containerEl, sufficient = true) {
     if (sufficient) {
       btnXor.addEventListener("click", () => {
         const stamp = getTimestamp();
-        triggerDownload(blob, `reconstruction_xor_${stamp}.png`);
+        triggerDownload(blob, `reconstruction_${mode}_${stamp}.png`);
       });
     } else {
       btnXor.disabled = true;

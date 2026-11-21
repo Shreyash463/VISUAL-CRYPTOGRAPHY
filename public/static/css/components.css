@@ -353,6 +353,14 @@
   background: rgba(110, 168, 255, 0.08);
 }
 
+.radio-card .badge {
+  display: none !important;
+}
+
+.radio-card.selected .badge {
+  display: inline-flex !important;
+}
+
 .radio-card-content {
   flex: 1;
 }
@@ -967,4 +975,250 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+
+/* VeilShare v2 Extended Components: Branding, Color Badges, Dual Drop, Interactive Overlay */
+.header-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-landing-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.header-landing-link:hover {
+  color: var(--text);
+}
+
+.footer-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.footer-sspu-logo {
+  height: 28px;
+  width: auto;
+}
+
+/* Color Detection Badge & Switch */
+.color-detect-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(229, 50, 63, 0.15);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-left: var(--space-2);
+}
+
+.color-detect-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.color-switch-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.color-switch-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+/* 4-Card Radio Group */
+.radio-cards-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Dual Drop Zones in Reconstruct */
+.dual-drop-zones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.drop-zone-share {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.drop-zone-share:hover, .drop-zone-share.dragover {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.drop-zone-share.loaded {
+  border-style: solid;
+  border-color: var(--success);
+  background: var(--surface);
+}
+
+.share-thumb-preview {
+  max-height: 110px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
+  image-rendering: pixelated;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.share-meta-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Interactive Overlay / Drag Stacking */
+.interactive-stack-container {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.interactive-stack-stage {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  touch-action: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.stack-canvas-base {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 320px;
+  image-rendering: pixelated;
+}
+
+.stack-canvas-drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 320px;
+  mix-blend-mode: multiply;
+  image-rendering: pixelated;
+  cursor: grab;
+  transition: transform 60ms ease-out;
+}
+
+.stack-canvas-drag:active {
+  cursor: grabbing;
+}
+
+.stack-snap-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  background: rgba(16, 22, 38, 0.85);
+  color: var(--success);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: none;
+}
+
+.stack-snap-badge.active {
+  display: block;
+}
+
+/* Display Enhancement Toggle */
+.display-toggle-group {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  margin-bottom: var(--space-3);
+}
+
+.btn-toggle-option {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 550;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-option.active {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+
+/* Animated reveal effect */
+@keyframes revealDissolve {
+  0% {
+    filter: blur(8px) contrast(3);
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  100% {
+    filter: blur(0) contrast(1);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.reveal-animated {
+  animation: revealDissolve 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

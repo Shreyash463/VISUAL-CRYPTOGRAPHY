@@ -1,6 +1,6 @@
 """Input validation module (M1) for uploads, parameters, and shares."""
 import io
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Dict, Optional
 import numpy as np
 from PIL import Image
 
@@ -83,8 +83,8 @@ def validate_params(
     """Validate generation parameters.
 
     Checks:
-      - mode in {'overlay', 'xor'} (BAD_MODE, 400)
-      - overlay requires n == 2, xor requires 2 <= n <= 6 (BAD_N, 400)
+      - mode in {'overlay', 'xor', 'color_overlay', 'color_xor'} (BAD_MODE, 400)
+      - overlay modes require n == 2, xor modes require 2 <= n <= 6 (BAD_N, 400)
       - preprocess in {'halftone', 'threshold'} (BAD_PREPROCESS, 400)
       - threshold integer in 0..255 (BAD_THRESHOLD, 400)
 
@@ -99,10 +99,10 @@ def validate_params(
     except (ValueError, TypeError):
         raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
 
-    if mode == "overlay":
+    if mode in ("overlay", "color_overlay"):
         if n_int != 2:
             raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
-    elif mode == "xor":
+    elif mode in ("xor", "color_xor"):
         if n_int < XOR_MIN_N or n_int > XOR_MAX_N:
             raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
 
@@ -124,7 +124,7 @@ def validate_shares(
     shares_data: List[Tuple[str, bytes]],
     mode: str,
     n_total: Any,
-) -> List[np.ndarray]:
+) -> Tuple[List[np.ndarray], List[Dict[str, str]], Optional[str]]:
     """Validate uploaded shares for reconstruction.
 
     Checks:
@@ -134,10 +134,10 @@ def validate_shares(
       - each share PNG only, <= 2 MB, longer side <= 1024
       - all shares have identical dimensions (SHARE_SIZE_MISMATCH, 400)
       - overlay shares have even dimensions (SHARE_ODD_SIZE, 400)
-      - pixels are strictly binary 0/255 (SHARE_NOT_BINARY, 400)
+      - pixel validity for chosen mode
 
     Returns:
-        List of 2D uint8 bit arrays (1=black, 0=white).
+        Tuple of (shares_list, metadata_list, warning_message).
     """
     if not isinstance(mode, str) or mode not in ALLOWED_MODES:
         raise VCError("BAD_MODE", ERROR_MESSAGES["BAD_MODE"], 400)
@@ -147,9 +147,9 @@ def validate_shares(
     except (ValueError, TypeError):
         raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
 
-    if mode == "overlay" and n_tot != 2:
+    if mode in ("overlay", "color_overlay") and n_tot != 2:
         raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
-    if mode == "xor" and not (XOR_MIN_N <= n_tot <= XOR_MAX_N):
+    if mode in ("xor", "color_xor") and not (XOR_MIN_N <= n_tot <= XOR_MAX_N):
         raise VCError("BAD_N", ERROR_MESSAGES["BAD_N"], 400)
 
     if not shares_data:
@@ -158,7 +158,8 @@ def validate_shares(
     if len(shares_data) > n_tot:
         raise VCError("TOO_MANY_SHARES", ERROR_MESSAGES["TOO_MANY_SHARES"], 400)
 
-    decoded_bits_list: List[np.ndarray] = []
+    decoded_list: List[np.ndarray] = []
+    metadata_list: List[Dict[str, str]] = []
     expected_dim = None
 
     for filename, file_bytes in shares_data:
@@ -182,6 +183,7 @@ def validate_shares(
         try:
             img = Image.open(io.BytesIO(file_bytes))
             fmt = (img.format or "").upper()
+            meta = {str(k): str(v) for k, v in getattr(img, "info", {}).items() if isinstance(v, (str, int, float))}
         except Exception as e:
             raise VCError("NOT_AN_IMAGE", ERROR_MESSAGES["NOT_AN_IMAGE"], 415) from e
 
@@ -201,17 +203,46 @@ def validate_shares(
         elif expected_dim != cur_dim:
             raise VCError("SHARE_SIZE_MISMATCH", ERROR_MESSAGES["SHARE_SIZE_MISMATCH"], 400)
 
-        if mode == "overlay":
+        if mode in ("overlay", "color_overlay"):
             if img.width % 2 != 0 or img.height % 2 != 0:
                 raise VCError("SHARE_ODD_SIZE", ERROR_MESSAGES["SHARE_ODD_SIZE"], 400)
 
-        img_l = img.convert("L")
-        arr = np.array(img_l, dtype=np.uint8)
-        unique_vals = set(np.unique(arr))
-        if not unique_vals.issubset({0, 255}):
-            raise VCError("SHARE_NOT_BINARY", ERROR_MESSAGES["SHARE_NOT_BINARY"], 400)
+        metadata_list.append(meta)
 
-        bits = (arr == 0).astype(np.uint8)
-        decoded_bits_list.append(bits)
+        if mode in ("overlay", "xor"):
+            img_l = img.convert("L")
+            arr = np.array(img_l, dtype=np.uint8)
+            unique_vals = set(np.unique(arr))
+            if not unique_vals.issubset({0, 255}):
+                raise VCError("SHARE_NOT_BINARY", ERROR_MESSAGES["SHARE_NOT_BINARY"], 400)
+            bits = (arr == 0).astype(np.uint8)
+            decoded_list.append(bits)
+        elif mode == "color_overlay":
+            img_rgb = img.convert("RGB")
+            arr = np.array(img_rgb, dtype=np.uint8)
+            # Ensure subpixels are crisp binary per channel (0 or 255)
+            unique_vals = set(np.unique(arr))
+            if not unique_vals.issubset({0, 255}):
+                # If compression or minor artifacts occurred, warn or round
+                # If values are close to 0 or 255, snap them, otherwise error
+                if all(min(v, 255 - v) <= 10 for v in unique_vals):
+                    arr = np.where(arr >= 128, 255, 0).astype(np.uint8)
+                else:
+                    raise VCError(
+                        "SHARE_NOT_BINARY",
+                        "Shares must be the original lossless PNGs. Compression or resizing from messaging apps damages the subpixel patterns.",
+                        400,
+                    )
+            decoded_list.append(arr)
+        elif mode == "color_xor":
+            img_rgb = img.convert("RGB")
+            arr = np.array(img_rgb, dtype=np.uint8)
+            decoded_list.append(arr)
 
-    return decoded_bits_list
+    # Check for group mismatch
+    group_warning = None
+    groups = [m.get("vc_group") for m in metadata_list if m.get("vc_group")]
+    if len(groups) > 1 and len(set(groups)) > 1:
+        group_warning = "These shares do not belong together (group mismatch). They were generated in separate runs."
+
+    return decoded_list, metadata_list, group_warning

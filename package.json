@@ -1,0 +1,32 @@
+{
+  "name": "visual-cryptography",
+  "version": "1.0.0",
+  "description": "A secret image is turned into several noise-like shares and becomes visible only when the right shares are combined. Decoding in the baseline Naor–Shamir (1994) scheme is performed by laying printed transparencies over each other, requiring no key knowledge and no cryptographic computation. The system provides both a 2-out-of-2 overlay stacking mode with measured contrast loss and pixel expansion, and an (n,n) XOR secret sharing mode (Wang et al. 2005) with no pixel expansion and exact mathematical reconstruction.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "python -m pytest",
+    "e2e": "python scripts/run_e2e_tests.py",
+    "e2e:prod": "python scripts/run_e2e_tests.py --prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY/issues"
+  },
+  "homepage": "https://github.com/Shreyash463/VISUAL-CRYPTOGRAPHY#readme",
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0"
+  }
+}

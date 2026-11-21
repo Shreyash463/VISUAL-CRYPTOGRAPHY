@@ -1,4 +1,10 @@
 {
-  "team_name": "",
-  "members": ["", "", "", ""]
+  "team_name": "VeilShare Team",
+  "mentor": "Prof. Faculty Mentor (SSPU)",
+  "members": [
+    "Shreyash Dixit",
+    "Team Member 2",
+    "Team Member 3",
+    "Team Member 4"
+  ]
 }

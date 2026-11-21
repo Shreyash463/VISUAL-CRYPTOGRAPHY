@@ -1,6 +1,6 @@
 """Flask application factory and API endpoints for Visual Cryptography engine."""
 import logging
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 from werkzeug.exceptions import HTTPException, RequestEntityTooLarge
 
 from vc.config import MAX_CONTENT_LENGTH, ERROR_MESSAGES
@@ -95,9 +95,35 @@ def create_app() -> Flask:
     def index():
         return render_template("index.html")
 
+    @app.route("/app", methods=["GET"])
+    @app.route("/app/", methods=["GET"])
+    def app_tool():
+        return render_template("index.html")
+
+    @app.route("/landing", methods=["GET"])
+    def landing_page():
+        return render_template("landing.html")
+
     @app.route("/api/health", methods=["GET"])
     def api_health():
         return jsonify({"ok": True, "status": "ok"})
+
+    @app.route("/api", methods=["GET"])
+    @app.route("/api/", methods=["GET"])
+    def api_root():
+        if "text/html" in request.headers.get("Accept", ""):
+            return redirect("/")
+        return jsonify({
+            "ok": True,
+            "name": "VeilShare Visual Cryptography API",
+            "version": "2.1.0",
+            "endpoints": {
+                "health": "/api/health",
+                "generate": "/api/generate",
+                "reconstruct": "/api/reconstruct",
+                "compare": "/api/compare",
+            },
+        })
 
     @app.route("/api/generate", methods=["POST"])
     def api_generate():
@@ -192,7 +218,7 @@ _original_wsgi = app.wsgi_app
 
 def _vercel_wsgi_app(environ, start_response):
     path = environ.get("PATH_INFO", "")
-    for prefix in ("/app.py", "/app", "/index.py", "/index"):
+    for prefix in ("/app.py", "/index.py", "/api/index.py"):
         if path == prefix or path == f"{prefix}/":
             environ["PATH_INFO"] = "/"
             break

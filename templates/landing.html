@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeilShare · Visual Cryptography | SSPU Final Review</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="stylesheet" href="/static/css/tokens.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/base.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/landing.css?v=2.1.0">
+  <script type="module" src="/static/js/landing.js?v=2.1.0"></script>
+</head>
+<body class="landing-body">
+  <!-- Header / Navigation -->
+  <header id="site-header" class="landing-header">
+    <div class="header-container">
+      <div class="header-left">
+        <div id="logo-slot" class="landing-logo">
+          <img src="/static/img/sspu-logo.png" alt="SSPU Logo" class="brand-logo" onerror="this.style.display='none'">
+        </div>
+        <div class="header-titles">
+          <h1>VeilShare</h1>
+          <p class="subtitle">Visual Cryptography · SSPU Final Review</p>
+        </div>
+      </div>
+      <nav class="landing-nav" aria-label="Main Navigation">
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#demo" class="nav-link">Interactive Demo</a>
+        <a href="#schemes" class="nav-link">Schemes</a>
+        <a href="#research" class="nav-link">Research (P1–P10)</a>
+        <a href="#use-cases" class="nav-link">Use Cases</a>
+        <a href="/app" class="btn btn-primary btn-sm nav-cta">Open Studio &rarr;</a>
+        <button id="theme-toggle" class="btn-icon-only" type="button" aria-label="Switch colour theme">
+          <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Section 1: Hero with Interactive Noise Canvas & Padlock Reveal -->
+    <section class="hero-section" id="hero">
+      <div class="hero-bg-canvas-wrap">
+        <canvas id="hero-canvas" class="hero-canvas" aria-label="Interactive visual cryptography simulation"></canvas>
+      </div>
+      <div class="hero-content">
+        <div class="badge-pill hero-badge">
+          <span class="badge-dot"></span>
+          <span>SSPU Semester Integrated Project · Final Review</span>
+        </div>
+        <h1 class="hero-title">Two noises.<br><span class="gradient-text">One secret.</span></h1>
+        <p class="hero-description">
+          Visual Cryptography splits a private image into randomized shares that appear as pure statistical noise.
+          Neither share leaks a single bit on its own—the secret only emerges when shares are superimposed.
+        </p>
+        <div class="hero-actions">
+          <a href="/app" class="btn btn-primary btn-lg">
+            <span>Try It Live in Studio</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+          <a href="#how-it-works" class="btn btn-secondary btn-lg">See How It Works &darr;</a>
+        </div>
+        <div class="hero-slider-wrap">
+          <div class="slider-label-row">
+            <span>Share 1 (Noise)</span>
+            <span class="interactive-tag">Move mouse or drag slider to align</span>
+            <span>Aligned (Revealed)</span>
+          </div>
+          <input type="range" id="hero-slider" min="0" max="100" value="0" class="hero-slider" aria-label="Slide to align visual shares and reveal secret padlock">
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: How It Works - 4-Step Scroll Storytelling -->
+    <section class="story-section" id="how-it-works">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Optical Cryptography</span>
+          <h2>How Visual Cryptography Works</h2>
+          <p class="section-subtitle">No computer chips required. Decoding relies entirely on the human visual system.</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <div class="step-visual step-visual-1">
+              <div class="secret-box">
+                <div class="pixel-grid-demo">
+                  <div class="p-cell black"></div><div class="p-cell white"></div>
+                  <div class="p-cell white"></div><div class="p-cell black"></div>
+                </div>
+              </div>
+            </div>
+            <h3>1. Discrete Pixels</h3>
+            <p>The original image is decomposed into discrete binary pixels (or halftoned CMY subtractive ink dots for full colour).</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <div class="step-visual step-visual-2">
+              <div class="halftone-wave">
+                <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span>
+              </div>
+            </div>
+            <h3>2. Floyd-Steinberg Halftoning</h3>
+            <p>Continuous-tone images are transformed via error-diffusion dithering, preserving tonal depth with binary ink distribution.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <div class="step-visual step-visual-3">
+              <div class="subpixel-patterns-demo">
+                <div class="pat-pair">
+                  <span class="pat-label">White: Share 1 = Share 2</span>
+                  <div class="sub-2x2 s-same"><span></span><span></span><span></span><span></span></div>
+                </div>
+                <div class="pat-pair">
+                  <span class="pat-label">Black: Share 2 = Complement</span>
+                  <div class="sub-2x2 s-comp"><span></span><span></span><span></span><span></span></div>
+                </div>
+              </div>
+            </div>
+            <h3>3. 2&times;2 Subpixel Expansion</h3>
+            <p>Each pixel becomes four subpixels with exactly two inked positions chosen from 6 permutations with cryptographically secure randomness.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">04</div>
+            <div class="step-visual step-visual-4">
+              <div class="stack-glow-box">
+                <div class="stack-layer layer-a"></div>
+                <div class="stack-layer layer-b"></div>
+                <div class="stack-result">SEALED</div>
+              </div>
+            </div>
+            <h3>4. Superposition Reveal</h3>
+            <p>Stacking the transparent sheets computes a physical logical OR / per-channel MIN. White pixels reflect 50% light; black pixels block 100%.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Live Mini-Demo -->
+    <section class="demo-section" id="demo">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Live Interactive Simulator</span>
+          <h2>Superposition Transparency Simulator</h2>
+          <p class="section-subtitle">Drag Share B across Share A. Observe how pure random noise resolves into an image upon optical alignment.</p>
+        </div>
+
+        <div class="mini-demo-container">
+          <div class="demo-stage-wrap">
+            <div class="demo-stage" id="demo-stage">
+              <canvas id="demo-share-a" class="stage-canvas canvas-base" width="300" height="300"></canvas>
+              <canvas id="demo-share-b" class="stage-canvas canvas-overlay" width="300" height="300"></canvas>
+            </div>
+            <div class="stage-status" id="stage-status">
+              <span class="status-indicator"></span>
+              <span id="status-text">Offset: 40px (Pure Noise)</span>
+            </div>
+          </div>
+
+          <div class="demo-controls">
+            <div class="demo-control-group">
+              <label for="demo-slider" class="control-label">Horizontal Transparency Alignment</label>
+              <input type="range" id="demo-slider" min="-60" max="60" value="40" class="form-range">
+              <div class="range-labels">
+                <span>Misaligned (Noise)</span>
+                <span class="snap-marker">0 (Perfect Alignment)</span>
+                <span>Misaligned (Noise)</span>
+              </div>
+            </div>
+            <div class="demo-buttons">
+              <button id="demo-snap-btn" class="btn btn-secondary btn-sm" type="button">Snap to Align (Reveal)</button>
+              <button id="demo-jitter-btn" class="btn btn-secondary btn-sm" type="button">Jitter Shares (Noise)</button>
+              <a href="/app" class="btn btn-primary btn-sm">Try With Your Own Images &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Cryptographic Schemes Matrix -->
+    <section class="schemes-section" id="schemes">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Mathematical Formulations</span>
+          <h2>Supported Cryptographic Schemes</h2>
+          <p class="section-subtitle">From physical transparent overlays to digital lossless XOR sharing.</p>
+        </div>
+
+        <div class="schemes-grid">
+          <!-- Scheme 1: Colour Overlay -->
+          <div class="scheme-card highlighted">
+            <div class="scheme-tag tag-primary">Mode A · New v2</div>
+            <div class="scheme-header">
+              <h3>Colour Overlay 2-out-of-2</h3>
+              <span class="paper-badge">P5 · Hou 2003</span>
+            </div>
+            <p class="scheme-desc">
+              Decomposes RGB into Cyan, Magenta, and Yellow subtractive ink channels with independent Floyd-Steinberg halftoning.
+              Physical stacking acts as subtractive ink multiplication (per-channel min), and display enhancement reconstructs vibrant continuous colour.
+            </p>
+            <ul class="scheme-features">
+              <li><strong>Decoding:</strong> Physical transparency overlay (no computer needed)</li>
+              <li><strong>Expansion:</strong> 2&times;2 subpixels (4&times; pixel area)</li>
+              <li><strong>Security:</strong> 0-bit single-share information leakage</li>
+              <li><strong>Resolution:</strong> Enhanced CMY recovery + Gaussian smoothing</li>
+            </ul>
+            <a href="/app#generate" class="scheme-link">Test Colour Overlay &rarr;</a>
+          </div>
+
+          <!-- Scheme 2: Colour XOR -->
+          <div class="scheme-card highlighted">
+            <div class="scheme-tag tag-accent">Mode B · New v2</div>
+            <div class="scheme-header">
+              <h3>Colour XOR (n, n) Secret Sharing</h3>
+              <span class="paper-badge">P6 · Wang et al. 2005</span>
+            </div>
+            <p class="scheme-desc">
+              Full 24-bit RGB secret sharing across <em>n</em> shares ($2 \le n \le 6$) using cryptographically secure bitwise XOR.
+              Zero pixel expansion and byte-for-byte exact lossless reconstruction upon combining all shares.
+            </p>
+            <ul class="scheme-features">
+              <li><strong>Decoding:</strong> Digital computation (Bitwise XOR)</li>
+              <li><strong>Expansion:</strong> 1:1 (zero pixel expansion)</li>
+              <li><strong>Security:</strong> Information-theoretically secure for any $n-1$ shares</li>
+              <li><strong>Fidelity:</strong> Byte-for-byte exact colour match (PSNR = &infin;)</li>
+            </ul>
+            <a href="/app#generate" class="scheme-link">Test Colour XOR &rarr;</a>
+          </div>
+
+          <!-- Scheme 3: B/W Overlay -->
+          <div class="scheme-card">
+            <div class="scheme-tag">Baseline P1</div>
+            <div class="scheme-header">
+              <h3>B/W Overlay 2-out-of-2</h3>
+              <span class="paper-badge">P1 · Naor &amp; Shamir 1994</span>
+            </div>
+            <p class="scheme-desc">
+              The seminal visual cryptography scheme. A binary secret is divided into two transparencies with 2&times;2 subpixel expansion.
+              Stacking achieves a 50% contrast differential without any calculation.
+            </p>
+            <ul class="scheme-features">
+              <li><strong>Decoding:</strong> Pure optical transparency superposition</li>
+              <li><strong>Expansion:</strong> 2&times;2 subpixels</li>
+              <li><strong>Contrast:</strong> Relative difference = 0.5 (exact theory)</li>
+              <li><strong>Benchmark:</strong> Proven historical standard</li>
+            </ul>
+            <a href="/app#generate" class="scheme-link">Test B/W Overlay &rarr;</a>
+          </div>
+
+          <!-- Scheme 4: B/W XOR -->
+          <div class="scheme-card">
+            <div class="scheme-tag">Digital P6</div>
+            <div class="scheme-header">
+              <h3>B/W XOR (n, n)</h3>
+              <span class="paper-badge">P6 · Wang 2005</span>
+            </div>
+            <p class="scheme-desc">
+              Binary secret sharing across up to 6 participants using bitwise modular arithmetic.
+              Produces compact binary shares that restore the secret with 100% contrast.
+            </p>
+            <ul class="scheme-features">
+              <li><strong>Decoding:</strong> Digital bitwise XOR</li>
+              <li><strong>Expansion:</strong> 1:1 (zero expansion)</li>
+              <li><strong>Contrast:</strong> 1.0 (perfect black and white)</li>
+              <li><strong>Multi-party:</strong> Supports 2 to 6 shares</li>
+            </ul>
+            <a href="/app#generate" class="scheme-link">Test B/W XOR &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Research Papers (P1 - P10) -->
+    <section class="research-section" id="research">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Academic Foundations</span>
+          <h2>Literature Survey &amp; Research Citations</h2>
+          <p class="section-subtitle">Our implementation is rigorously grounded in these ten landmark papers (P1–P10).</p>
+        </div>
+
+        <div class="papers-grid" id="papers-grid">
+          <!-- Dynamically populated or rendered -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Real-World Use Cases -->
+    <section class="use-cases-section" id="use-cases">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Practical Deployments</span>
+          <h2>Real-World Use Cases</h2>
+          <p class="section-subtitle">Where visual cryptography safeguards sensitive information across decentralized architectures.</p>
+        </div>
+
+        <div class="use-cases-grid">
+          <div class="use-case-card">
+            <div class="case-icon-wrap">
+              <svg class="icon case-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h3>Biometric Privacy Protection (P7)</h3>
+            <p>
+              Facial recognition templates and fingerprint minutiae images are divided into two non-communicating cloud databases.
+              Even a complete database breach exposes zero biometric data; the template is only reconstructed during live authentication.
+            </p>
+          </div>
+
+          <div class="use-case-card">
+            <div class="case-icon-wrap">
+              <svg class="icon case-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="11" y2="17"></line></svg>
+            </div>
+            <h3>Tamper-Proof Online Voting (P8)</h3>
+            <p>
+              Voter ballot confirmations are split between the voter's physical receipt and the election audit ledger.
+              Neither election officials nor receipt handlers can alter or inspect individual votes without the voter's physical share.
+            </p>
+          </div>
+
+          <div class="use-case-card">
+            <div class="case-icon-wrap">
+              <svg class="icon case-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+            </div>
+            <h3>Medical Imagery &amp; Telehealth</h3>
+            <p>
+              High-resolution diagnostic medical scans and patient identification are separated into distinct cryptographic shares.
+              Complies with HIPAA/GDPR by ensuring that data-in-transit carries zero intelligible diagnostic artifacts if intercepted.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Team & Institution Credits -->
+    <section class="team-section" id="team">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-badge">Symbiosis Skills &amp; Professional University</span>
+          <h2>Project Team &amp; Acknowledgments</h2>
+          <p class="section-subtitle">Semester Integrated Project · School of Computer Science &amp; Engineering</p>
+        </div>
+
+        <div class="institution-card">
+          <img src="/static/img/sspu-logo.png" alt="SSPU Official Emblem" class="inst-logo">
+          <div class="inst-info">
+            <h3>Symbiosis Skills and Professional University</h3>
+            <p class="inst-motto">&ldquo;वसुधैव कुटुम्बकम्&rdquo; · The World is One Family</p>
+            <p class="inst-location">Kiwale, Pune, Maharashtra 412101</p>
+          </div>
+        </div>
+
+        <div class="team-grid" id="team-grid">
+          <div class="team-card">
+            <div class="team-avatar">SD</div>
+            <h4>Shreyash Dixit</h4>
+            <p class="team-role">Lead Full-Stack &amp; Algorithm Engineer</p>
+            <p class="team-sub">VeilShare Project Lead</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">T2</div>
+            <h4>Team Member 2</h4>
+            <p class="team-role">Security &amp; Cryptanalysis</p>
+            <p class="team-sub">SSPU CSE</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">T3</div>
+            <h4>Team Member 3</h4>
+            <p class="team-role">UI/UX &amp; Frontend Systems</p>
+            <p class="team-sub">SSPU CSE</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">T4</div>
+            <h4>Team Member 4</h4>
+            <p class="team-role">Quality Assurance &amp; Evaluation</p>
+            <p class="team-sub">SSPU CSE</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="container footer-content">
+      <div class="footer-left">
+        <img src="/static/img/sspu-logo.png" alt="SSPU Logo" class="footer-logo">
+        <div>
+          <p class="footer-title">VeilShare · Visual Cryptography</p>
+          <p class="footer-sub">Symbiosis Skills &amp; Professional University · Final Review</p>
+        </div>
+      </div>
+      <div class="footer-right">
+        <a href="/app" class="btn btn-primary btn-sm">Open Studio</a>
+      </div>
+    </div>
+    <div class="footer-bottom text-center">
+      <p>&copy; 2026 VeilShare Visual Cryptography | SSPU Final Review</p>
+    </div>
+  </footer>
+</body>
+</html>

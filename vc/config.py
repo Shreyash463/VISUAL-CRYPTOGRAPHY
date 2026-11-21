@@ -7,6 +7,7 @@ MAX_SHARE_BYTES = 2 * 1024 * 1024        # 2 MB
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024     # 16 MB
 MIN_IMAGE_SIDE_PX = 16
 MAX_WORKING_SIDE_PX = 512
+DEFAULT_COLOR_MAX_SIDE = 320             # Color overlay expands 2x to 640px max
 MAX_SHARE_SIDE_PX = 1024
 MAX_IMAGE_PIXELS = 25_000_000
 
@@ -15,8 +16,9 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"}
 ALLOWED_FORMATS = {"PNG", "JPEG", "BMP"}
 
 # Allowed modes and parameters
-ALLOWED_MODES = {"overlay", "xor"}
+ALLOWED_MODES = {"overlay", "xor", "color_overlay", "color_xor"}
 OVERLAY_N = 2
+COLOR_OVERLAY_N = 2
 XOR_MIN_N = 2
 XOR_MAX_N = 6
 ALLOWED_PREPROCESS = {"halftone", "threshold"}
@@ -46,6 +48,11 @@ RULE_OVERLAY_RECONSTRUCTION = (
     "every secret-white block has exactly 2 black and 2 white subpixels (light fraction 0.5)."
 )
 RULE_XOR_RECONSTRUCTION = "Reconstructed image is bit-identical to the secret image."
+RULE_COLOR_OVERLAY_RECONSTRUCTION = (
+    "Stacking transparencies multiplies CMY inks (per-channel min). Display enhancement recovers "
+    "halftoned CMY bits via 0.75 coverage thresholding with light Gaussian smoothing."
+)
+RULE_COLOR_XOR_RECONSTRUCTION = "Reconstructed RGB image is byte-for-byte identical to the original secret image."
 
 # Tolerance rule description
 LEAKAGE_TOLERANCE_RULE = "max(0.02, 4*0.5/sqrt(m))"
@@ -57,13 +64,14 @@ ERROR_MESSAGES = {
     "FILE_TOO_LARGE": "The uploaded file is too large. Please upload a file smaller than 5 MB (or 2 MB per share).",
     "NOT_AN_IMAGE": "The uploaded file is not a valid or readable image. Please provide a valid PNG, JPG, or BMP file.",
     "IMAGE_TOO_SMALL": "The image is too small. Please provide an image with at least 16 pixels per side.",
-    "BAD_MODE": "Invalid mode selected. Please choose either 'overlay' or 'xor'.",
-    "BAD_N": "Invalid number of shares. Overlay mode requires n=2, and XOR mode requires n between 2 and 6.",
+    "BAD_MODE": "Invalid mode selected. Please choose 'overlay', 'color_overlay', 'xor', or 'color_xor'.",
+    "BAD_N": "Invalid number of shares. Overlay modes require n=2, and XOR modes require n between 2 and 6.",
     "BAD_PREPROCESS": "Invalid preprocessing method. Please choose either 'halftone' or 'threshold'.",
     "BAD_THRESHOLD": "Invalid threshold value. Please choose an integer between 0 and 255.",
     "NO_SHARES": "No shares were provided. Please upload at least one share PNG file.",
     "TOO_MANY_SHARES": "Too many shares provided. The number of shares cannot exceed the total expected shares.",
     "SHARE_SIZE_MISMATCH": "All uploaded shares must have the exact same dimensions. Please upload matching shares.",
+    "SHARE_GROUP_MISMATCH": "Warning: Uploaded shares belong to different generation groups. They cannot reconstruct a valid secret.",
     "SHARE_ODD_SIZE": "Overlay shares must have even width and height. Please provide valid overlay share images.",
     "SHARE_NOT_BINARY": "Shares must contain only pure black and white pixels. Please provide valid binary share PNGs.",
     "INTERNAL": "An internal error occurred while processing the image. Please try again.",

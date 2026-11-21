@@ -1,15 +1,14 @@
-# Visual Cryptography — Progress Review II Demo Script
+# Visual Cryptography — Final Review Demo Script
 
 **Project:** Visual Cryptography  
 **Institution:** Symbiosis Skills & Professional University, Pune  
-**Event:** Semester Integrated Project — Progress Review II  
-**Date:** 10 October 2026  
+**Event:** Semester Integrated Project — Final Review  
 
 ---
 
 ### Step 1. Open the application
 - **Action:** Open a modern web browser and navigate to `http://127.0.0.1:5000/`.
-- **Expected Result:** The header displays "Visual Cryptography", the subtitle indicates Progress Review II, the logo slot displays the official logo (or designated placeholder), and the Generate tab loads by default with full navigation tabs visible.
+- **Expected Result:** The header displays "Visual Cryptography", the subtitle indicates Final Review, the logo slot displays the official SSPU logo, and the Generate tab loads by default with full navigation tabs visible.
 
 ### Step 2. Upload an image and generate Overlay shares
 - **Action:** In the Generate tab, upload a sample secret image and click the "Generate shares" button with Overlay 2-out-of-2 mode selected.

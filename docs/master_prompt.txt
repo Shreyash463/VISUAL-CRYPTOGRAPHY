@@ -1,0 +1,110 @@
+<USER_REQUEST>
+# MASTER PROMPT: VeilShare Visual Cryptography v2 (Premium UI + Colour Reconstruction + Windows-safe execution)
+
+## 0. PRIME DIRECTIVE
+You are a senior full-stack engineer and award-level creative front-end designer. Do the ENTIRE job yourself, end to end: audit, install, build, run, test, fix, verify, commit, push, and check the live deployment. Do not ask me questions. Do not leave any manual step for me. Where something is ambiguous, make the best decision, record it in the final report, and keep going. Deliver everything together in ONE final report at the end. This is for my final college review in front of faculty, so it must look stunning and work perfectly on the first try.
+
+## 1. CONTEXT
+- Project: SSPU (Symbiosis Skills & Professional University, Pune) Semester Integrated Project, "Visual Cryptography" web app. Live at https://visual-cryptography-rouge.vercel.app
+- Current app has tabs Generate / Reconstruct / Compare / About, a theme toggle, scheme cards (for example "Overlay 2-out-of-2 (P1), baseline Naor-Shamir 1994, 2x2 subpixels"), and the placeholder text "Space reserved for the official SSPU logo". The UI is dark navy, plain and boring. Sir liked the functionality.
+- P1..P10 are our research papers and are used as scheme/reference IDs:
+  P1 Naor & Shamir, Visual Cryptography, EUROCRYPT 1994 https://doi.org/10.1007/BFb0053419
+  P2 Naor & Shamir, Visual Cryptography II (contrast) https://eprint.iacr.org/1996/007
+  P3 Ateniese, Blundo, De Santis, Stinson, General Access Structures https://eccc.weizmann.ac.il/report/1996/012
+  P4 Blundo, De Santis, Stinson, On the Contrast https://eprint.iacr.org/1996/013
+  P5 Hou, Visual Cryptography for Color Images, Pattern Recognition 2003 https://ir.lib.ncu.edu.tw/handle/987654321/31614
+  P6 Wang, Zhang, Ma, Huang, Secret Color Images Sharing Schemes Based on XOR Operation https://eprint.iacr.org/2005/372
+  P7 Ross & Othman, Visual Cryptography for Biometric Privacy https://www.infona.pl/resource/bwmeta1.element.ieee-art-000005658142
+  P8 Rura, Issac, Haldar, Online Voting System (Steganography + VC) https://hrcak.srce.hr/en/179239
+  P9 Mursi, Salama, Mansour, VC Schemes: A Comprehensive Survey http://www.ermt.net/docs/papers/Volume_3/11_November2014/V3N11-141.pdf
+  P10 Leung, Ng, Wong, On the Security of a VC Scheme for Color Images https://eprint.iacr.org/2008/223
+
+## 2. PHASE 0: AUDIT FIRST (non-destructive)
+1. Inspect the repo: framework, package.json / requirements.txt, API routes, vercel.json, where the image processing runs (browser vs serverless), existing schemes, tests. Write findings to docs/AUDIT.md.
+2. Create a rollback tag `pre-ui-v2` on the current main, then work on branch `ui-v2-colour`.
+3. NEVER remove or break existing features (all existing schemes, Compare tab, theme toggle, download). Existing black-and-white P1 behaviour must stay byte-identical.
+
+## 3. WINDOWS SAFETY RULES (CRITICAL: nothing may get blocked)
+My machine is Windows 11 with PowerShell 5.1. Windows Security blocked an unsigned `pip.exe` launcher ("can't confirm who published pip.exe"). Therefore:
+- NEVER run pip.exe, pip3.exe, flask.exe, uvicorn.exe, gunicorn.exe, pytest.exe or any generated launcher .exe in a Scripts folder. ALWAYS use module form: `python -m pip install --disable-pip-version-check --only-binary=:all: <pkg>`, `python -m venv .venv`, `python -m pytest`, `python -m flask ...`, `python -m uvicorn ...`. Call the venv interpreter directly (`.venv\Scripts\python.exe -m ...`) instead of activating scripts. If `python` is missing use `py -3 -m ...`.
+- For JavaScript use `npm`, `npx` and `node` only (npm.cmd / npx.cmd). Do not download or run random binaries. No `iex`, no `Invoke-WebRequest | iex`.
+- Do NOT write or run .ps1 scripts; automate with Node or Python scripts or plain commands. Do NOT change the execution policy and do NOT use `-ExecutionPolicy Bypass`.
+- NEVER disable, tamper with, or add exclusions to Windows Security / Defender / Smart App Control / SmartScreen / firewall. Never run as Administrator.
+- If any command is blocked: do not retry it unchanged. Switch to the module form or another approach, and log it. If a tool such as a browser-automation download is blocked, fall back to build + HTTP smoke tests and say so honestly.
+- Prefer pure-wheel dependencies (numpy, pillow) and avoid anything needing compilers. Keep Python dependencies small so they fit Vercel's serverless size limit.
+
+## 4. COLOUR FEATURE (the most important functional change)
+Goal: when I upload a COLOUR image, the reconstruction from the two shares must show the image in COLOUR (today it comes out black and white).
+
+Implement these modes. Keep the existing B/W schemes untouched.
+
+### Mode A: "Colour Overlay 2-out-of-2 (P5, Hou-style CMY)": works with physical stacking
+1. Load as RGB. Normalise: apply EXIF orientation, composite any alpha onto white, convert palette/CMYK/16-bit to 8-bit RGB. Resize so the long side is at most 320 px by default (user can choose up to 512), because shares are 2x larger.
+2. Convert to CMY: c=255-R, m=255-G, y=255-B (ink amount).
+3. Halftone each channel independently with Floyd-Steinberg error diffusion (Pillow `Image.convert("1")` on the L-image of ink amount is fine). ink=1 means ink present.
+4. For each channel apply the Naor-Shamir (2,2) construction: each pixel becomes a 2x2 block of subpixels; choose one of the 6 patterns having exactly 2 inked subpixels at random (cryptographically secure randomness: Python `secrets`-seeded numpy Generator, or `crypto.getRandomValues` in the browser), independently per pixel and per channel. If the channel pixel is 0 (no ink) share 2 gets the same pattern; if 1 (ink) share 2 gets the complement.
+5. Compose each share image: subpixel colour = (255*(1-c), 255*(1-m), 255*(1-y)). So a subpixel is white, cyan, magenta, yellow, red, green, blue or black. Stacking two shares equals per-channel MIN (multiply blend); verify this equals the OR of inks.
+6. Reconstruct has two display options (toggle, default = Enhanced):
+   - Raw stack: per-channel min of the two shares (what a real transparency overlay shows).
+   - Colour recovery (display enhancement): average each 2x2 block per channel into ink coverage (0.5 = no ink, 1.0 = ink), threshold at 0.75 to recover the halftoned CMY bits at secret resolution, map to RGB, then a very light Gaussian smoothing (sigma about 0.8). Label it clearly as "display enhancement using both shares; no extra information". Result must look like the original in colour.
+7. Export shares as lossless PNG only (never JPEG).
+
+### Mode B: "Colour XOR n-of-n, exact colour (XOR principle of P6)": digital combine, perfect result
+- Work on full 8-bit R, G, B channels. For n shares: shares 1..n-1 are uniformly random bytes (secure randomness), share n = secret XOR share1 XOR ... XOR share(n-1). Reconstruct = XOR of all shares. No pixel expansion. Output must equal the original resized image BYTE FOR BYTE. Keep the existing n limits. State honestly in the About tab that this is an 8-bit-channel extension of the XOR idea in P6 and needs a computer to combine (not a physical overlay).
+
+### Behaviour and UX rules
+- Auto-detect colour (for example mean saturation or inter-channel difference above a small threshold). If colour is detected show a "Colour detected" badge, default the scheme to the best colour mode, and offer a "Keep colour" switch (on by default) plus "Force black & white".
+- Reconstruct tab: two drop zones (Share A, Share B; extra zones for XOR n shares). Auto-detect the scheme from PNG metadata (tEXt keys vc_scheme, vc_version, vc_group, vc_index, vc_n, vc_w, vc_h; store NO secret data), and also encode scheme/group/index in the file name (vc-<scheme>-<group>-<index>.png) as a fallback; always provide a manual scheme selector. Validate: dimensions must match, group IDs must match (warn "These shares do not belong together"), friendly errors if a share was recompressed or resized ("Shares must be the original lossless PNGs; messaging apps may damage them"). If generation runs in the browser and canvas cannot write PNG text chunks, add a tiny PNG chunk writer.
+- Animated reveal: the two shares slide together and dissolve into the colour result. Download button for the result as PNG. Keep the existing download features, and add "Download both shares (ZIP)".
+- Generate tab live overlay demo: second share is draggable or controlled by a slider over the first, using CSS mix-blend-mode: multiply, with a magnetic snap to perfect alignment. Colours must visibly appear as the shares align.
+- Compare tab: extend metrics to colour (for example PSNR and mean colour error versus the original). For XOR show "identical / lossless".
+- Respect hosting limits: if processing is serverless on Vercel, downscale in the browser BEFORE upload so request bodies stay under Vercel's request limit (about 4.5 MB; check current docs) and keep the existing 5 MB UI limit honest (compress client-side). Handle HEIC/unsupported types with a clear message.
+
+## 5. NEW UI/UX: "our way" (design brief)
+Design identity: "noise and reveal". Pixel noise resolves into a clean image. No generic AI-purple gradients, no stock-template look.
+Themes (keep the existing toggle, polish both):
+- Dark "Noise": bg #0A0E1A, panels #141B30, borders #2B3558, text #EAF0FF, muted #8F9BB8, accent red #E5323F.
+- Light "Pastel": bg #FBF8FF, panels in lavender #F1E9FF / mint #E4F6EE / peach #FFEBDD / sky #E3F1FB / pink #FFE6EE, text #2E2A4A, accent rose #D65F86.
+Fonts: self-host via @fontsource npm packages (Space Grotesk for headings, Inter for body, JetBrains Mono for small labels). NO runtime CDN dependencies of any kind; the demo may run on bad Wi-Fi.
+Branding: replace "Space reserved for the official SSPU logo" with the real logo from public/sspu-logo.png (search the repo for an existing logo first); show it in the header and footer. If no file exists keep a clean replaceable placeholder component and report it. Replace the "10 Oct 2026 / Progress Review II" chip with "Final Review" (do not invent a date). Team names and mentor live in one config file (src/config or project.json) with clearly marked placeholders.
+
+### Routes
+- `/` = new landing page, `/app` = the tool with Generate / Reconstruct / Compare / About (add Vercel rewrites so deep links work).
+
+### Landing page sections
+1. HERO (full viewport): a performant canvas of animated 2x2-subpixel noise; two noise layers slide into alignment as the user scrolls or moves the mouse, and a padlock emerges from the noise (a real stack reveal). Headline: "Two noises. One secret." Sub: "Visual Cryptography: split an image into shares that reveal it only when stacked. SSPU Semester Integrated Project." CTAs: "Try it live" (to /app) and "See how it works" (scroll).
+2. HOW IT WORKS: pinned scroll-storytelling in 4 steps: secret image, halftone to pixels, the six 2x2 patterns with the rule (white = same pattern in both shares, black = complementary), stacking reveals the secret. Scroll-linked animation (CSS scroll-driven animations or IntersectionObserver; GSAP ScrollTrigger is allowed if installed through npm).
+3. LIVE MINI-DEMO: interactive share-alignment slider with built-in sample shares.
+4. SCHEMES: cards for each scheme (B/W overlay, Colour overlay, Colour XOR, plus any existing ones) with tags (physical stack / exact / 2x expansion) and the paper IDs.
+5. RESEARCH: the 10 papers P1..P10 as elegant cards with working links.
+6. USE CASES: biometric privacy (P7), online voting (P8), secure image sharing.
+7. TEAM & CREDITS and a footer with the SSPU logo.
+### App polish
+- Stepper Upload, Scheme, Generate, with drag-and-drop preview, skeleton loaders, toasts, progress feedback, "dealing shares" animation, magnetic buttons, subtle cursor glow, animated counters.
+- DEMO MODE: one button that loads a built-in COLOURFUL sample image (generate it procedurally; no copyrighted images) and runs split, combine and reveal automatically.
+- Quality bars: responsive from 360 px to 1920 px; WCAG AA contrast; full keyboard access and focus rings; alt text and aria labels; honour `prefers-reduced-motion` (static fallbacks); pause canvases when the tab is hidden; cap devicePixelRatio; code-split heavy parts; Lighthouse performance 90+ on desktop; zero console errors; no layout shift.
+
+## 6. TESTS (must all pass; write them)
+- B/W P1: stacked result equals the OR of shares; existing behaviour unchanged.
+- Colour overlay: (a) the stack equals per-channel min of the shares; (b) every 2x2 block has exactly 2 inked subpixels per channel in each share; (c) pattern frequencies are uniform (chi-square) and do not differ between secret-ink and secret-white regions (single share leaks nothing); (d) synthetic 8-colour block image (red, green, blue, yellow, cyan, magenta, white, black): in the Enhanced reconstruction each block's mean colour is nearest to its true colour.
+- Colour XOR: reconstruction equals the original byte for byte for n = 2..max; any n-1 shares look uniformly random.
+- API/UI: upload, split, download, reconstruct round trip; mismatched-size and mismatched-group errors; oversized and invalid files.
+- If Playwright installs without being blocked, run browser tests; otherwise do build + HTTP smoke tests and say so.
+
+## 7. DELIVERY
+1. Fix every failure yourself and re-run until green.
+2. Commit in logical commits, merge `ui-v2-colour` into main (no force-push, no destructive resets), push to the branch Vercel deploys from. Keep the `pre-ui-v2` tag for rollback.
+3. Wait for the Vercel deployment, then smoke-test https://visual-cryptography-rouge.vercel.app in production: upload a colour sample, split, reconstruct, and confirm the result is in colour.
+4. Write docs/CHANGELOG.md, update README, and create docs/VIVA_CHEATSHEET.md with 10 likely examiner questions and short answers (how colour works, overlay versus XOR, why 2x expansion, why a single share is safe, limitations, what P1..P10 contributed). Use the built-in browser to save screenshots (landing hero, scroll sections, Generate with a colour image, Reconstruct showing colour) in docs/screens/.
+5. Update the About tab: scheme explanations, limitations (contrast loss, 2x expansion, shares must stay lossless PNG), and references.
+
+## 8. FINAL REPORT (ONE message)
+Include: what changed; the colour methods with the test results (pass/fail counts); anything Windows Security blocked and how you worked around it; deployment URL status; the list of files I should open; screenshot paths; honest known limitations; and any assumptions you made.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-21T11:47:11+05:30.
+
+The user has uploaded 1 image(s):
+- C:/Users/Shreyash/.gemini/antigravity/brain/1130db4c-243a-4971-a94b-41cb3d25f749/.user_uploaded/media_1795241808926_5e01bb5b.png
+You can embed this image in an artifact if you need the USER to review it.
+</ADDITIONAL_METADATA>

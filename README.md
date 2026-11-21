@@ -1,113 +1,78 @@
-# Visual Cryptography — Core Engine and Interactive Web Platform
-
-A secret image is turned into several noise-like shares and becomes visible only when the right shares are combined. Decoding in the baseline Naor–Shamir (1994) scheme is performed by laying printed transparencies over each other, requiring no key knowledge and no cryptographic computation. The system provides both a 2-out-of-2 overlay stacking mode with measured contrast loss and pixel expansion, and an (n,n) XOR secret sharing mode (Wang et al. 2005) with no pixel expansion and exact mathematical reconstruction.
-
-Developed for **Symbiosis Skills & Professional University, Pune** (Semester Integrated Project; Progress Review II, 10 October 2026).
+# VeilShare: Visual Cryptography Studio (v2)
+**Symbiosis Skills & Professional University (SSPU) · Kiwale, Pune**  
+**School of Computer Science & Engineering · Semester Integrated Project · Final Review**  
+**Live Production URL:** [https://visual-cryptography-rouge.vercel.app](https://visual-cryptography-rouge.vercel.app)
 
 ---
 
-## Setup & Run Commands
+## 1. Overview
+VeilShare is a modern, information-theoretically secure Visual Cryptography web studio that decomposes sensitive images into randomized, statistically indistinguishable noise shares. Neither share leaks a single bit of information on its own. The underlying secret only emerges when shares are superimposed.
 
-### macOS / Linux
-```bash
+### Supported Cryptographic Modes:
+1. **Mode A: Colour Overlay 2-out-of-2 (P5, Hou 2003)**:
+   - Decomposes 24-bit RGB images into subtractive Cyan, Magenta, and Yellow (CMY) dot densities.
+   - Converts each channel via Floyd-Steinberg error diffusion halftoning into binary dot matrices.
+   - Expands each dot into a $2\times 2$ Naor-Shamir subpixel matrix ($m=4$).
+   - Physical stacking simulated via per-channel minimum (`np.minimum(share1, share2)`).
+   - Display Enhancement mode averages $2\times 2$ blocks, thresholds ink coverage at 0.75, and applies spatial Gaussian smoothing ($\sigma=0.8$) to recover the full original colour gamut.
+2. **Mode B: Colour XOR n-of-n (P6, Wang et al. 2005)**:
+   - True 24-bit RGB bitwise XOR secret sharing across $n \in [2..6]$ shares.
+   - Lossless, byte-for-byte exact digital reconstruction with $0\times$ pixel expansion (1:1 spatial fidelity).
+3. **Black & White Baseline Schemes**:
+   - **Overlay 2-out-of-2 (P1, Naor-Shamir 1994)**: Physical transparency superposition.
+   - **XOR n-of-n (P6, Wang et al. 2005)**: Binary bitwise XOR sharing.
+
+---
+
+## 2. Windows 11 Execution Safety (Smart App Control Safe)
+To avoid Windows Smart App Control and Defender blocking unsigned `.exe` launchers generated in Python `Scripts/` folders, always execute tools in module form:
+```powershell
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py                        # open http://127.0.0.1:5000
-pytest -q
-python -m vc.bench
+
+# Install dependencies (strictly pure binary wheels)
+python -m pip install --disable-pip-version-check --only-binary=:all: -r requirements.txt
+
+# Run application server
+python app.py
+
+# Run test suite
+python -m pytest -v
 ```
 
-### Windows
-```cmd
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py                        # open http://127.0.0.1:5000
-pytest -q
-python -m vc.bench
-```
+---
+
+## 3. Architecture & Security Guarantees
+- **Strict Content-Security-Policy (CSP)**:
+  `default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`
+  - Zero inline `<script>`, zero inline `<style>`, zero `style=""`, zero inline event handlers (`on...`), zero `eval()`.
+  - Zero external CDN dependencies; all fonts (Space Grotesk, Inter, JetBrains Mono) are locally hosted `.woff2`.
+- **Stateless Serverless Execution**:
+  No uploaded images or generated shares are ever written to server disk or database; base64 payloads are processed transiently in-memory and immediately garbage collected.
+- **Group Mismatch Protection**:
+  All shares embed standard lossless PNG `tEXt` chunks (`vc_scheme`, `vc_version`, `vc_group`, `vc_index`, `vc_n`). The browser client reads these metadata chunks on drag-and-drop to alert users if shares from different generation runs are mixed.
 
 ---
 
-## Key Phase 3 Capabilities & UI Architecture
-
-1. **Design System & Theming:**
-   - Technical-editorial theme with deep ink (`#0B0F17`) dark mode and crisp paper (`#F4F6FB`) light mode.
-   - Respects `prefers-color-scheme` by default, with manual `#theme-toggle` persisted in `localStorage["vc-theme"]`.
-   - Accessible SVG stroke icons, focus indicators, and reduced-motion compliance.
-
-2. **Generate Tab Enhancements:**
-   - Collapsible "How it works" hero strip detailing Split, Distribute, and Combine steps.
-   - Two-column responsive desktop layout (1024px+) with sticky controls and interactive stepper.
-   - Seeded noise empty state and loading skeletons.
-   - Results sub-tabs: Overview, Shares, Metrics, and Stack demo.
-   - Interactive Reveal Slider comparing Share 1 (noise) against the combined reconstruction.
-   - Subpixel Inspector dialog supporting 1×, 2×, and 4× zoom magnification.
-
-3. **Reconstruction Download & Viewing Copy:**
-   - **Exact Stacked PNG (2× size):** Faithful representation of physical transparency overlay.
-   - **Viewing Copy (1× size):** Created client-side via canvas by averaging each 2×2 block to one pixel with doubled contrast for reading convenience. Contrast loss is still reported in metrics (C-1).
-   - **Exact XOR Reconstruction PNG:** Bit-identical mathematical reconstruction.
-   - **Timestamped Filenames:** Formatted with local `HHMMSS` stamps (`share_<mode>_<i>_of_<n>_<stamp>.png`, `reconstruction_<mode>_<stamp>.png`, `reconstruction_<mode>_viewing_<stamp>.png`) to eliminate file collisions.
-   - **Privacy Notice:** Downloaded files contain revealed secrets; no images or shares are ever saved on the server.
-
-4. **Reconstruct Tab Redesign:**
-   - Instant client-side dimension verification flagging size mismatches before API calls (C-5).
-   - "Use shares from the last Generate run" button for seamless cross-tab workflows.
-   - Segmented Fit control ("Fit width | 100%") with scrollable viewport.
-
-5. **Visual Metrics & Comparative Analysis:**
-   - Visual progress tracks for pixel expansion, contrast relative difference, and single-share leakage deviation.
-   - Side-by-side comparison on the Compare tab with dual bar pairs and verification badges.
-   - Expandable documentation accordions on the About tab.
+## 4. Research Literature Foundations (P1–P10)
+- **P1**: Naor & Shamir (1994), *Visual Cryptography*, EUROCRYPT '94.
+- **P2**: Naor & Shamir (1996), *Visual Cryptography II: Improving the Contrast*, IACR '96.
+- **P3**: Ateniese, Blundo, De Santis, Stinson (1996), *General Access Structures*, ECCC '96.
+- **P4**: Blundo, De Santis, Stinson (1996), *On the Contrast in Visual Cryptography Schemes*, IACR '96.
+- **P5**: Hou (2003), *Visual Cryptography for Color Images*, Pattern Recognition.
+- **P6**: Wang, Zhang, Ma, Huang (2005), *Secret Color Images Sharing Schemes Based on XOR Operation*, IACR '05.
+- **P7**: Ross & Othman (2011), *Visual Cryptography for Biometric Privacy*, IEEE.
+- **P8**: Rura, Issac, Haldar (2017), *Online Voting System with Steganography & Visual Cryptography*, CIT.
+- **P9**: Mursi, Salama, Mansour (2014), *Visual Cryptography Schemes: A Comprehensive Survey*, ERMT.
+- **P10**: Leung, Ng, Wong (2008), *On the Security of a Visual Cryptography Scheme for Color Images*, IACR '08.
 
 ---
 
-## Feature Traceability Matrix
-
-| Requirement ID | Description | Implementation Location |
-|:---|:---|:---|
-| **FR-1** | Accept uploaded secret image | `vc/validation.py`, `app.py`, `static/js/generate.js` |
-| **FR-2** | Validate format, dimensions, size; return clear user guidance | `vc/validation.py`, `vc/config.py` |
-| **FR-3** | Preprocess image to binary matrix (halftone / threshold) | `vc/preprocessing.py` |
-| **FR-4** | Support 2-of-2 overlay and selectable XOR modes | `vc/overlay.py`, `vc/xor.py`, `app.py` |
-| **FR-5** | Display generated shares and download each separately as PNG | `static/js/generate.js`, `static/js/download.js` |
-| **FR-6** | Reconstruct and display secret from user-uploaded shares | `vc/service.py`, `static/js/reconstruct.js` |
-| **FR-7** | Prevent secret revelation from fewer than required shares | `vc/service.py`, `tests/test_xor.py`, `static/js/generate.js` |
-| **FR-8** | Measure and report contrast, pixel expansion, leakage per run | `vc/metrics.py`, `static/js/metrics.js` |
-| **NFR-1** | Sub-threshold shares reveal zero secret information | D7 tolerance checks in `vc/metrics.py`, `tests/test_xor.py` |
-| **NFR-2** | Cryptographically secure randomness | `vc/rng.py` (strictly using Python `secrets` module) |
-| **NFR-3** | Stateless privacy: zero server persistence of secrets or shares | Memory-only handling in `vc/service.py`, verified in `tests/test_privacy.py` |
-| **NFR-4** | High usability, accessibility, keyboard navigation | `templates/index.html`, `static/css/`, `static/js/` |
-| **NFR-5** | Execution time proportional to size and share count | Timed in `vc/service.py`, benchmarked in `vc/bench.py` |
-| **NFR-6** | Exact reconstruction for XOR; recognisable secret for Overlay | Verified in `vc/metrics.py`, `tests/test_metrics.py` |
-| **C-1** | Contrast loss and pixel expansion measured, not hidden | Reported openly in metrics panels and `static/js/compare.js` |
-| **C-2** | No Cover model (inapplicable for k,n > 2) | Documented in `static/js/about.js` and architectural limits |
-| **C-3** | XOR restricted to (n,n) without pixel expansion | Implemented in `vc/xor.py` for n=2..6 |
-| **C-4** | Colour sharing excluded pending security verification (P10) | Preprocessing binarization in `vc/preprocessing.py` |
-| **C-5** | Shares must maintain identical dimensions for alignment | Enforced in `vc/validation.py` and demonstrated in `static/js/stacking.js` |
+## 5. Review Documentation
+- **Audit Findings**: [`docs/AUDIT.md`](docs/AUDIT.md)
+- **Changelog**: [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
+- **Viva Voce Examiner Q&A Guide**: [`docs/VIVA_CHEATSHEET.md`](docs/VIVA_CHEATSHEET.md)
+- **Decisions Log**: [`DECISIONS.md`](DECISIONS.md)
 
 ---
-
-## Not Included in this Build
-
-- **k-out-of-n Overlay Sharing (FR-9):** The baseline Naor–Shamir 2-out-of-2 scheme is implemented; general k-out-of-n with arbitrary access structures is omitted.
-- **XOR (2,n) Scheme:** Only (n,n) XOR secret sharing is implemented.
-- **Colour Sharing:** Excluded following security literature review showing statistical vulnerability in multi-colour schemes (P5/P10).
-- **Share Storage and Delivery (M6):** Explicitly excluded to guarantee strict server statelessness and privacy (NFR-3).
-
----
-
-## Placeholders to Fill
-
-1. **Official SSPU Logo:**
-   Drop the university logo image at `static/img/sspu-logo.png`. Until provided, an accessible designated placeholder box is displayed.
-2. **Team Details:**
-   Open `static/team.json` and replace the empty string values with your Team Name and 4 Member Names:
-   ```json
-   {
-     "team_name": "Team CryptV",
-     "members": ["Student 1", "Student 2", "Student 3", "Student 4"]
-   }
-   ```
+&copy; 2026 VeilShare · Symbiosis Skills & Professional University (SSPU) · Kiwale, Pune
