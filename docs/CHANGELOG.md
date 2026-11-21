@@ -1,6 +1,35 @@
-# Changelog: VeilShare Visual Cryptography v2 (Semester Integrated Project · Final Review)
+# Changelog: VeilShare Visual Cryptography Studio (SSPU Final Review)
 
 All notable changes to the Visual Cryptography project for the SSPU Final Review are documented in this file.
+
+---
+
+## [3.0.0] - 2026-11-21: VeilShare v3 · On-Device Cryptographic Engine & HAYAT-Grade Design System
+
+### Added
+- **100% On-Device Web Worker Cryptographic Engine**:
+  - Migrated entire cryptographic pipeline from Python/Flask backend to client-side TypeScript running in a dedicated Web Worker (`worker.ts`).
+  - **Zero Cloud Transmission**: User secret images never leave the browser client, eliminating serverless cold starts, API timeouts, and privacy leaks.
+  - Implemented `fillCryptoRandomValues` in `src/engine/cryptoRandom.ts` to chunk entropy requests into 64 KB slices, preventing browser `QuotaExceededError` crashes on large images.
+  - Implemented lossless PNG encoder and metadata parser with `tEXt` chunk injection and Adler32/CRC32 verification (`pngChunk.ts`).
+  - Supported 4 cryptographic modes:
+    1. **Mode A (P5, Hou 2003)**: CMY subtractive primary decomposition, Floyd-Steinberg halftoning, 2×2 subpixel expansion, optical subtractive superposition, and 2×2 block enhanced continuous colour recovery.
+    2. **Mode B (P6, Wang et al. 2005)**: 24-bit RGB bitwise XOR secret sharing across $n \in [2..6]$ shares with 100% byte-exact mathematical reconstruction.
+    3. **Mode C (P1, Naor-Shamir 1994)**: Baseline binary 2×2 subpixel visual cryptography.
+    4. **Mode D (P6)**: Binary XOR secret sharing.
+- **HAYAT-Grade Animated Frontend & Design System**:
+  - React 18 + Vite + TypeScript single-page application with HashRouter (`/#/`) ensuring edge CDN compatibility.
+  - Interactive hero landing page with animated noise canvas, scrub alignment slider, and 4-step storytelling illustrating the physics of optical secret sharing.
+  - 3-step wizard workflow (Upload → Scheme Selection → Results) fitting standard 1366×768 screens without excessive scrolling.
+  - Sticky bottom action bars with keyboard support (`Enter` advances steps, `Escape` executes secure memory wipe).
+  - Prominent side-by-side noise share cards with individual `[Download Share PNG]` buttons, full-size inspection modal, and ZIP archive download.
+  - Reconstruct Studio with intelligent drag-and-drop validation (reconstruction file detection, duplicate share detection, dimension mismatch, and group mismatch warnings).
+  - Live Optical Superposition simulator with magnetic snap alignment (`(0, 0)`), draggable layer, and opacity controls.
+  - Real-time network telemetry auditor showing `Data Sent: 0`.
+  - Official Symbiosis Skills and Professional University (SSPU) emblem ("वसुधैव कुटुम्बकम्") and academic branding.
+- **Automated Verification Suites**:
+  - 6 Vitest unit tests (`npm test`): Validating PNG encoding, CMY halftoning, subpixel expansion, enhanced color recovery, byte-exact XOR for $n=2..5$, and demo generation.
+  - 8 Playwright E2E real-browser tests (`npm run test:e2e`): Driving Google Chrome against local and production deployments, covering landing navigation, generation, downloads, full-colour reconstruction, XOR fidelity, session handoff, live superposition, Escape wipe, mobile responsiveness (390×844), and Axe-core accessibility (0 critical violations).
 
 ---
 
