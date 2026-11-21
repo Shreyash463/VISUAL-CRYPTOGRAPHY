@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+:root {
+  /* Dark Noise Theme (Default) */
+  --bg: #0A0E1A;
+  --panel: #141B30;
+  --panel-alt: #1A233D;
+  --border: #2B3558;
+  --border-strong: #3F4D7D;
+  --text: #EAF0FF;
+  --muted: #8F9BB8;
+  --accent: #E5323F;
+  --accent-hover: #F04855;
+  --accent-soft: rgba(229, 50, 63, 0.14);
+  --success: #10B981;
+  --success-soft: rgba(16, 185, 129, 0.15);
+  --warning: #F59E0B;
+  --warning-soft: rgba(245, 158, 11, 0.15);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --glow-accent: 0 0 24px -4px rgba(229, 50, 63, 0.35);
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --ease-veil: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.theme-pastel {
+  --bg: #FBF8FF;
+  --panel: #FFFFFF;
+  --panel-alt: #F1E9FF;
+  --border: #E2D7F5;
+  --border-strong: #C4B5E6;
+  --text: #2E2A4A;
+  --muted: #6C668A;
+  --accent: #D65F86;
+  --accent-hover: #E07499;
+  --accent-soft: rgba(214, 95, 134, 0.12);
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.12);
+  --warning: #D97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --card-shadow: 0 4px 20px -2px rgba(110, 85, 150, 0.08);
+  --glow-accent: 0 0 24px -4px rgba(214, 95, 134, 0.25);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  transition: background-color 0.25s var(--ease-veil), color 0.25s var(--ease-veil);
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+code, kbd, samp, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Noise overlay utility */
+.noise-bg {
+  background-image: radial-gradient(rgba(229, 50, 63, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Accessible focus rings */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
